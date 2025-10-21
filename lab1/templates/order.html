@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>{{ .Title }}</title>
+  <link rel="stylesheet" href="/resources/styles/order_style.css">
+</head>
+<body>
+  <!-- ШАПКА -->
+  <header class="app-header">
+    <div class="header-left">
+      <a href="/hello" class="logo-wrap">
+        <img src="/resources/img/docs_2020q4_48dp.png" alt="Документы" class="logo">
+      </a>
+      <a href="/hello" class="title-link">
+        <span class="title">Документы</span>
+      </a>
+    </div>
+
+    <div class="header-right">
+      <div class="avatar">
+        <img src="/resources/img/A.png" alt="User" class="avatar">
+      </div>
+    </div>
+  </header>
+
+  <!-- ОСНОВНОЙ КОНТЕНТ -->
+  <main class="content">
+    <div class="doc-container">
+      <img src="/resources/img/{{ .Type }}.png" alt="{{ .Type }}" class="doc-image">
+
+      <div class="doc-info">
+        <h2 class="doc-title">{{ .Title }}</h2>
+
+        <p><strong>Автор(ы):</strong></p>
+        <ul class="author-list">
+          {{ range .Author }}
+            <li>{{ . }}</li>
+          {{ end }}
+        </ul>
+
+        <p><strong>Дата создания:</strong> {{ .Date }}</p>
+        <p><strong>Последнее изменение:</strong> {{ .LastEdit }}</p>
+        <p class="doc-description">{{ .Description }}</p>
+
+        <!-- ✅ Кнопка теперь внутри карточки -->
+        <div class="edit-btn-wrapper">
+          <a href="/edit/{{ .ID }}" class="edit-btn large">Редактировать</a>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

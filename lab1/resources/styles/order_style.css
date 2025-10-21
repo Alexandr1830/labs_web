@@ -1,0 +1,141 @@
+/* ===== Глобальные настройки ===== */
+* {
+  box-sizing: border-box;
+  font-family: "MS Reference Sans Serif", Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #fff;
+  color: #202124;
+}
+
+/* ===== Шапка ===== */
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+
+  background: #fff;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  z-index: 10;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+}
+
+.title-link {
+  text-decoration: none;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 400;
+  color: #000;
+}
+
+.title-link:hover .title {
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.header-right .avatar img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+/* ===== Контент ===== */
+.content {
+  margin-top: 100px; /* отступ под шапку */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== Карточка документа ===== */
+.doc-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #fff;
+  border: 3px solid #F0F4F9;
+  border-radius: 0;
+  width: 700px;
+  padding: 40px 30px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.doc-image {
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+  margin-bottom: 30px;
+}
+
+.doc-info {
+  text-align: center;
+  width: 100%;
+}
+
+.doc-title {
+  font-size: 22px;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.author-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 10px 0 20px 0;
+}
+
+.author-list li {
+  font-size: 15px;
+  margin: 4px 0;
+}
+
+.doc-description {
+  margin-top: 20px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ===== Кнопка внутри карточки ===== */
+.edit-btn-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.edit-btn.large {
+  padding: 10px 24px;
+  font-size: 14px;
+  border-radius: 8px;
+  background: #f1f3f4;
+  border: 1px solid #dadce0;
+  text-decoration: none;
+  color: #202124;
+  transition: background 0.2s ease;
+}
+
+.edit-btn.large:hover {
+  background: #fff;
+}
+

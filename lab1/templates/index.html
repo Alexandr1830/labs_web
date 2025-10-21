@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Документы</title>
+  <link rel="stylesheet" href="/resources/styles/index_style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-left">
+    <a href="/hello" class="logo-wrap">
+      <img src="/resources/img/docs_2020q4_48dp.png" alt="Документы" class="logo">
+    </a>
+    <span class="title">Документы</span>
+  </div>
+
+  <div class="header-center">
+    <form class="search-box" action="/hello" method="GET">
+      <img src="/resources/img/icon.png" alt="" class="search-icon">
+      <input type="text" name="query" placeholder="Поиск" value="{{ .query }}">
+    </form>
+  </div>
+
+  <div class="header-right">
+    <img src="/resources/img/A.png" alt="User" class="avatar">
+  </div>
+</header>
+
+<main class="content">
+  <section class="cards">
+    {{ range .orders }}
+    <div class="card" onclick="location.href='/order/{{ .ID }}'">
+      <div class="card-icon">
+        <img src="/resources/img/{{ .Type }}.png" alt="{{ .Type }}">
+      </div>
+
+      <hr class="card-line">
+
+      <div class="card-info">
+        <div class="card-title" title="{{ .Title }}">{{ .Title }}</div>
+
+        <div class="card-meta">
+          <div class="meta-left">
+            <div class="author-wrapper">
+              <img src="/resources/img/user.png" alt="Автор" class="author-icon">
+
+              <!-- Список авторов -->
+              <div class="author-list">
+                {{ range .Author }}
+                  <p>{{ . }}</p>
+                {{ end }}
+                </div>
+              </div>
+
+              <span class="card-date">{{ .Date }}</span>
+            </div>
+          <div class="meta-right">
+            <!-- Кнопка ведёт на отдельную страницу -->
+            <a href="/edit/{{ .ID }}" class="edit-btn" onclick="event.stopPropagation();">
+              Редактировать
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {{ else }}
+      <p class="empty">Документы не найдены</p>
+    {{ end }}
+  </section>
+</main>
+
+</body>
+</html>

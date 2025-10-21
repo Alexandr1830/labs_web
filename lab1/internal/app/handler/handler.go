@@ -72,3 +72,21 @@ func (h *Handler) GetOrders(ctx *gin.Context) {
 		// в ином случае оно будет очищаться при нажатии на кнопку
 	})
 }
+
+func (h *Handler) GetApplication(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	application, err := h.Repository.GetApplication(id)
+	if err != nil {
+		logrus.Error(err)
+		ctx.String(http.StatusNotFound, "Заявка не найдена")
+		return
+	}
+
+	// ✅ Передаём сам объект Application
+	ctx.HTML(http.StatusOK, "application.html", application)
+}

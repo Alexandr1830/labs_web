@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Заявка №{{ .ID }}</title>
+  <link rel="stylesheet" href="/resources/styles/application_style.css">
+</head>
+<body>
+  <!-- ШАПКА -->
+  <header class="app-header">
+    <div class="header-left">
+      <a href="/hello" class="logo-wrap">
+        <img src="/resources/img/docs_2020q4_48dp.png" alt="Заявки" class="logo">
+      </a>
+      <a href="/hello" class="title-link">
+        <span class="title">Заявки</span>
+      </a>
+    </div>
+
+    <div class="header-right">
+      <div class="avatar">
+        <img src="/resources/img/A.png" alt="User" class="avatar">
+      </div>
+    </div>
+  </header>
+
+  <!-- КОНТЕНТ -->
+  <main class="content">
+    <div class="application-container">
+      <h2 class="application-title">Заявка №{{ .ID }}</h2>
+
+      <table class="application-table">
+        <thead>
+          <tr>
+            <th>№</th>
+            <th>Документ</th>
+            <th>Авторы</th>
+            <th>Почты авторов</th>
+            <th>Статус</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ range $index, $doc := .Documents }}
+          <tr>
+            <td>{{ add $index 1 }}</td>
+            <td>{{ $doc.Title }}</td>
+            <td>
+              {{ range $doc.Authors }}
+                <div>{{ . }}</div>
+              {{ end }}
+            </td>
+            <td>
+              {{ range $doc.Emails }}
+                <div>{{ . }}</div>
+              {{ end }}
+            </td>
+            <td>
+              {{ if eq $doc.Status "open" }}
+                <span class="status-open">Открыто</span>
+              {{ else }}
+                <span class="status-closed">Закрыто</span>
+              {{ end }}
+            </td>
+          </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    </div>
+  </main>
+</body>
+</html>

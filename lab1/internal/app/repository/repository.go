@@ -22,6 +22,18 @@ type Order struct {
 	Author      []string
 }
 
+type Application struct {
+	ID        int
+	Documents []Document
+}
+
+type Document struct {
+	Title   string
+	Authors []string
+	Emails  []string
+	Status  string // "open" или "closed"
+}
+
 func (r *Repository) GetOrders() ([]Order, error) {
 	orders := []Order{
 		{
@@ -108,3 +120,53 @@ func (r *Repository) GetOrdersByTitle(title string) ([]Order, error) {
 
 	return result, nil
 }
+
+func (r *Repository) GetApplication(id int) (Application, error) {
+	applications := []Application{
+		{
+			ID: 1,
+			Documents: []Document{
+				{
+					Title:   "Техническое задание на модуль авторизации",
+					Authors: []string{"Найденко А.В.", "Иванов И.И."},
+					Emails:  []string{"naidenko@mail.ru", "ivanov@mail.ru"},
+					Status:  "open",
+				},
+				{
+					Title:   "API спецификация сервиса",
+					Authors: []string{"Петров П.П."},
+					Emails:  []string{"petrov@mail.ru"},
+					Status:  "closed",
+				},
+			},
+		},
+		{
+			ID: 2,
+			Documents: []Document{
+				{
+					Title:   "Отчёт по нагрузочному тестированию",
+					Authors: []string{"Иванов И.И.", "Петров П.П."},
+					Emails:  []string{"ivanov@mail.ru", "petrov@mail.ru"},
+					Status:  "closed",
+				},
+				{
+					Title:   "Матрица распределения задач",
+					Authors: []string{"Сидоров С.С."},
+					Emails:  []string{"sidorov@mail.ru"},
+					Status:  "open",
+				},
+			},
+		},
+	}
+
+	// Ищем заявку по ID
+	for _, app := range applications {
+		if app.ID == id {
+			return app, nil
+		}
+	}
+
+	return Application{}, fmt.Errorf("заявка с ID %d не найдена", id)
+}
+
+

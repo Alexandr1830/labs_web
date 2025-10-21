@@ -1,0 +1,108 @@
+/* ===== Глобальные ===== */
+* {
+  box-sizing: border-box;
+  font-family: "MS Reference Sans Serif", Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #fff;
+  color: #202124;
+}
+
+/* ===== Шапка ===== */
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+
+  background: #fff;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  z-index: 10;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+}
+
+.title-link {
+  text-decoration: none;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 400;
+  color: #000;
+}
+
+.header-right .avatar img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+/* ===== Контент ===== */
+.content {
+  margin-top: 100px;
+  display: flex;
+  justify-content: center;
+}
+
+/* ===== Таблица ===== */
+.application-container {
+  width: 900px;
+  background: #fff;
+  border: 3px solid #F0F4F9;
+  padding: 40px;
+  border-radius: 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.application-title {
+  text-align: center;
+  font-size: 22px;
+  margin-bottom: 30px;
+}
+
+.application-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.application-table th {
+  text-align: left;
+  background: #F0F4F9;
+  padding: 10px;
+  font-weight: 600;
+  border-bottom: 2px solid #dadce0;
+}
+
+.application-table td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+
+.status-open {
+  color: #1a73e8;
+  font-weight: 600;
+}
+
+.status-closed {
+  color: #d93025;
+  font-weight: 600;
+}

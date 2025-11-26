@@ -4,71 +4,116 @@
   <meta charset="utf-8">
   <title>Документы</title>
   <link rel="stylesheet" href="/resources/styles/index_style.css">
+  <style>
+    /* Чтобы карточка-ссылка не была подчёркнута */
+    .card-link {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+  </style>
 </head>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  // Пробуем залогиниться автоматически
+  fetch("/login", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "ivanov@mail.ru",   // ← твой логин
+      password: "hash123"        // ← твой пароль
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log("Auth:", data);
+  })
+  .catch(err => console.error("Login error:", err));
+
+});
+</script>
+
+
 <body>
 
-<header class="app-header">
-  <div class="header-left">
-    <a href="/hello" class="logo-wrap">
-      <img src="/resources/img/docs_2020q4_48dp.png" alt="Документы" class="logo">
-    </a>
-    <span class="title">Документы</span>
-  </div>
+  <!-- == ШАПКА == -->
+  <header class="app-header">
+    <div class="header-left">
+      <a href="/" class="logo-wrap">
+        <img src="/resources/img/docs_2020q4_48dp.png" class="logo" alt="Документы">
+      </a>
+      <a href="/" class="title-link">
+        <span class="title">Документы</span>
+      </a>
+    </div>
+  </header>
 
-  <div class="header-center">
-    <form class="search-box" action="/hello" method="GET">
-      <img src="/resources/img/icon.png" alt="" class="search-icon">
-      <input type="text" name="query" placeholder="Поиск" value="{{ .query }}">
+
+  <!-- == ПОИСК + ЗАЯВКА == -->
+  <div class="search-row" style="display:flex; justify-content:center; align-items:center; gap:40px;">
+
+    <!-- Поиск -->
+    <form method="get" action="/" class="search-box">
+      <img src="/resources/img/icon.png" class="search-icon">
+      <input type="text" name="query" placeholder="Поиск документов..." value="{{ .query }}">
     </form>
+
+    <!-- Заявка -->
+    <a href="/application/{{ .AppID }}" class="cart-link" style="text-decoration:none;">
+      <img src="/resources/img/cart.png" class="cart-icon" alt="Заявка">
+      <span class="cart-count">{{ .AppCount }}</span>
+    </a>
+
   </div>
 
-  <div class="header-right">
-    <img src="/resources/img/A.png" alt="User" class="avatar">
-  </div>
-</header>
 
-<main class="content">
-  <section class="cards">
-    {{ range .orders }}
-    <div class="card" onclick="location.href='/order/{{ .ID }}'">
-      <div class="card-icon">
-        <img src="/resources/img/{{ .Type }}.png" alt="{{ .Type }}">
-      </div>
+  <!-- == КАРТОЧКИ ДОКУМЕНТОВ == -->
+  <main class="content">
 
-      <hr class="card-line">
+    <div class="cards">
+      {{ range .orders }}
 
-      <div class="card-info">
-        <div class="card-title" title="{{ .Title }}">{{ .Title }}</div>
+      <a href="/order/{{ .DocumentID }}" class="card-link">
+        <div class="card">
 
-        <div class="card-meta">
-          <div class="meta-left">
-            <div class="author-wrapper">
-              <img src="/resources/img/user.png" alt="Автор" class="author-icon">
+          <!-- Иконка -->
+          <div class="card-icon">
+            <img src="/resources/img/{{ .Type }}.png" alt="{{ .Type }}">
+          </div>
 
-              <!-- Список авторов -->
-              <div class="author-list">
-                {{ range .Author }}
-                  <p>{{ . }}</p>
-                {{ end }}
-                </div>
+          <hr class="card-line">
+
+          <!-- Информация -->
+          <div class="card-info">
+
+            <div class="meta-left">
+              <span class="card-title">{{ .Title }}</span>
+
+              <div style="display:flex;align-items:center;gap:5px;">
+                <img src="/resources/img/user.png" class="author-icon">
+                <span class="card-date">{{ .Author.Username }}</span>
               </div>
 
-              <span class="card-date">{{ .Date }}</span>
+              <span class="card-date">Тип: {{ .Type }}</span>
             </div>
-          <div class="meta-right">
-            <!-- Кнопка ведёт на отдельную страницу -->
-            <a href="/edit/{{ .ID }}" class="edit-btn" onclick="event.stopPropagation();">
-              Редактировать
-            </a>
+
+            <!-- Добавить в заявку -->
+            <form method="POST" action="/application/add/{{ .DocumentID }}" onclick="event.stopPropagation();">
+              <button class="edit-btn">Добавить</button>
+            </form>
+
           </div>
+
         </div>
-      </div>
+      </a>
+
+      {{ end }}
     </div>
-    {{ else }}
-      <p class="empty">Документы не найдены</p>
-    {{ end }}
-  </section>
-</main>
+
+  </main>
 
 </body>
 </html>

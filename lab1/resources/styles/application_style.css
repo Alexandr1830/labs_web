@@ -1,4 +1,4 @@
-/* ===== Глобальные ===== */
+/* ====== Глобальные настройки ====== */
 * {
   box-sizing: border-box;
   font-family: "MS Reference Sans Serif", Arial, sans-serif;
@@ -6,11 +6,11 @@
 
 body {
   margin: 0;
-  background: #fff;
+  background: #f8f9fa;
   color: #202124;
 }
 
-/* ===== Шапка ===== */
+/* ====== ШАПКА ====== */
 .app-header {
   position: fixed;
   top: 0;
@@ -21,11 +21,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
 
+  padding: 0 20px;
   background: #fff;
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-  z-index: 10;
+  box-shadow: 0 4px 4px rgba(0,0,0,0.15);
+  z-index: 100;
 }
 
 .header-left {
@@ -49,60 +49,137 @@ body {
   color: #000;
 }
 
-.header-right .avatar img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+.title-link:hover .title {
+  opacity: 0.7;
+  cursor: pointer;
 }
 
-/* ===== Контент ===== */
+/* ====== ОСНОВНОЙ КОНТЕНТ ====== */
 .content {
-  margin-top: 100px;
+  margin-top: 90px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
 }
 
-/* ===== Таблица ===== */
-.application-container {
+/* ====== ЗАГОЛОВОК ЗАЯВКИ ====== */
+.application-header {
   width: 900px;
   background: #fff;
-  border: 3px solid #F0F4F9;
-  padding: 40px;
-  border-radius: 0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  padding: 20px 30px;
+  border: 2px solid #f0f4f9;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
 }
 
-.application-title {
-  text-align: center;
-  font-size: 22px;
-  margin-bottom: 30px;
+.app-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 10px 0;
 }
 
-.application-table {
-  width: 100%;
-  border-collapse: collapse;
+.app-meta p {
+  margin: 4px 0;
+  font-size: 15px;
 }
 
-.application-table th {
+/* ====== СПИСОК ДОКУМЕНТОВ ====== */
+.docs-title {
+  width: 900px;
   text-align: left;
-  background: #F0F4F9;
-  padding: 10px;
+  font-size: 20px;
+  margin-top: 10px;
   font-weight: 600;
-  border-bottom: 2px solid #dadce0;
+  color: #202124;
 }
 
-.application-table td {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-  vertical-align: top;
+.docs-container {
+  width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.status-open {
-  color: #1a73e8;
-  font-weight: 600;
+/* ====== КАРТОЧКА ДОКУМЕНТА ====== */
+.doc-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+
+  background: #fff;
+  border: 2px solid #f0f4f9;
+  border-radius: 12px;
+  padding: 20px;
+
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
 }
 
-.status-closed {
-  color: #d93025;
+.doc-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+}
+
+.doc-card-left {
+  flex: 0 0 75px;
+}
+
+.doc-icon {
+  width: 75px;
+  height: 75px;
+  object-fit: contain;
+}
+
+.doc-card-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.doc-title {
+  font-size: 18px;
   font-weight: 600;
+  margin: 0;
+  color: #202124;
+}
+
+.doc-field {
+  font-size: 14px;
+  color: #5f6368;
+  margin: 2px 0;
+}
+
+/* ====== УДАЛИТЬ ЗАЯВКУ ====== */
+.delete-btn-wrapper {
+  width: 900px;
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  margin-bottom: 40px;
+}
+
+.delete-btn {
+  background: #f1f3f4;
+  border: 1px solid #dadce0;
+  padding: 12px 28px;
+  border-radius: 10px;
+  color: #202124;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+  background: #e8eaed;
+  transform: translateY(-2px);
+}
+
+/* ====== ПУСТО ====== */
+.empty {
+  font-size: 16px;
+  color: #5f6368;
+  margin-top: 10px;
 }

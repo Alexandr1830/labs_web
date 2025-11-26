@@ -2,171 +2,235 @@ package repository
 
 import (
 	"fmt"
-	"strings"
+	"os"
+	"time"
+
+	"github.com/joho/godotenv"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 type Repository struct {
+	db *gorm.DB
 }
 
-func NewRepository() (*Repository, error) {
-	return &Repository{}, nil
-}
+//
+// ========== МОДЕЛИ ==========
+//
 
-type Order struct {
-	ID          int
-	Title       string
-	Type        string
-	Date        string
-	LastEdit    string
-	Description string
-	Author      []string
-}
-
-type Application struct {
-	ID        int
-	Documents []Document
+type User struct {
+	UserID       uint      `gorm:"primaryKey;column:user_id"`
+	Username     string    `gorm:"type:varchar(100);not null"`
+	Email        string    `gorm:"type:varchar(255);unique;not null"`
+	PasswordHash string    `gorm:"type:varchar(255);not null"`
+	Role         string    `gorm:"type:varchar(50);not null"`
+	DateJoined   time.Time `gorm:"autoCreateTime"`
 }
 
 type Document struct {
-	Title   string
-	Authors []string
-	Emails  []string
-	Status  string // "open" или "closed"
+	DocumentID uint      `gorm:"primaryKey;column:document_id"`
+	Title      string    `gorm:"type:varchar(255);not null"`
+	Type       string    `gorm:"type:varchar(10);not null"`
+	CreatedAt  time.Time `gorm:"autoCreateTime"`
+	UpdatedAt  time.Time `gorm:"autoUpdateTime"`
+	Status     string    `gorm:"type:varchar(50);not null"`
+	ImagePath  string    `gorm:"type:varchar(255)"`
+
+	Description string    `gorm:"type:text"`
+	LastEdit    time.Time `gorm:"autoUpdateTime"`
+
+	AuthorID   uint
+	EditorID   uint
+	ApproverID uint
+
+	Author   User `gorm:"foreignKey:AuthorID"`
+	Editor   User `gorm:"foreignKey:EditorID"`
+	Approver User `gorm:"foreignKey:ApproverID"`
 }
 
-func (r *Repository) GetOrders() ([]Order, error) {
-	orders := []Order{
-		{
-			ID: 1,
-			Title: "Техническое задание на модуль авторизации",
-			Type: "DOC",
-			Date: "12 сент. 2025",
-			LastEdit: "20 сент. 2025",
-			Description: "Документ описывает структуру, требования и функционал модуля авторизации пользователей.",
-			Author: []string{"Найденко А.В.", "Иванов И.И.", "Петров П.П.", "Сидоров И.П.", "Петряков С.В."},
-		},
-		{
-			ID: 2,
-			Title: "API спецификация сервиса",
-			Type: "DOC",
-			Date: "12 авг. 2025",
-			LastEdit: "15 авг. 2025",
-			Description: "Спецификация REST API для взаимодействия микросервисов.",
-			Author: []string{"Иванов И.И.", "Петров П.П.", "Сидоров И.П."},
-		},
-		{
-			ID: 3,
-			Title: "Отчёт по нагрузочному тестированию",
-			Type: "XLS",
-			Date: "5 авг. 2025",
-			LastEdit: "8 авг. 2025",
-			Description: "Отчёт о проведённом нагрузочном тестировании сервисов и анализ производительности.",
-			Author: []string{"Иванов И.И.", "Петров П.П."},
-		},
-		{
-			ID: 4,
-			Title: "Матрица распределения задач",
-			Type: "XLS",
-			Date: "17 февр. 2025",
-			LastEdit: "20 февр. 2025",
-			Description: "Матрица распределения задач между членами команды по проекту.",
-			Author: []string{"Иванов И.И.", "Петров П.П."},
-		},
-		{
-			ID: 5,
-			Title: "Тестовые данные для базы данных",
-			Type: "SQL",
-			Date: "23 окт. 2024",
-			LastEdit: "25 окт. 2024",
-			Description: "SQL-скрипты и примеры тестовых данных для наполнения базы данных.",
-			Author: []string{"Иванов И.И.", "Петров П.П."},
-		},
-	}
+// Единственная заявка (корзина)
+type Application struct {
+	ApplicationID uint      `gorm:"primaryKey;column:application_id"`
+	Title         string    `gorm:"column:title"`
+	Description   string    `gorm:"column:description"`
+	Status        string    `gorm:"column:status"`
+	CreatedAt     time.Time `gorm:"column:created_at"`
 
-	if len(orders) == 0 {
-		return nil, fmt.Errorf("массив пустой")
-	}
-
-	return orders, nil
+	Documents []Document `gorm:"many2many:applications_documents;joinForeignKey:ApplicationID;joinReferences:DocumentID"`
 }
 
-func (r *Repository) GetOrder(id int) (Order, error) {
-	// тут у вас будет логика получения нужной услуги, тоже наверное через цикл в первой лабе, и через запрос к БД начиная со второй
-	orders, err := r.GetOrders()
+func (Application) TableName() string {
+	return "permission_applications"
+}
+
+type ApplicationDocument struct {
+	ApplicationID uint `gorm:"primaryKey;column:application_id"`
+	DocumentID    uint `gorm:"primaryKey;column:document_id"`
+}
+
+func (ApplicationDocument) TableName() string {
+	return "applications_documents"
+}
+
+//
+// ========== ИНИЦИАЛИЗАЦИЯ ENV ==========
+//
+
+func init() {
+	_ = godotenv.Load("../../.env")
+
+	fmt.Println("DB_HOST =", os.Getenv("DB_HOST"))
+	fmt.Println("DB_PORT =", os.Getenv("DB_PORT"))
+	fmt.Println("DB_USER =", os.Getenv("DB_USER"))
+	fmt.Println("DB_NAME =", os.Getenv("DB_NAME"))
+}
+
+//
+// ========== ПОДКЛЮЧЕНИЕ К БАЗЕ ==========
+//
+
+func New() (*Repository, error) {
+	dsn := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_PORT"),
+		os.Getenv("DB_USER"),
+		os.Getenv("DB_PASS"),
+		os.Getenv("DB_NAME"),
+	)
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return Order{}, err // тут у нас уже есть кастомная ошибка из нашего метода, поэтому мы можем просто вернуть ее
+		return nil, fmt.Errorf("ошибка подключения к БД: %v", err)
 	}
 
-	for _, order := range orders {
-		if order.ID == id {
-			return order, nil // если нашли, то просто возвращаем найденный заказ (услугу) без ошибок
-		}
-	}
-	return Order{}, fmt.Errorf("заказ не найден") // тут нужна кастомная ошибка, чтобы понимать на каком этапе возникла ошибка и что произошло
-}
-
-func (r *Repository) GetOrdersByTitle(title string) ([]Order, error) {
-	orders, err := r.GetOrders()
+	err = db.AutoMigrate(&User{}, &Document{}, &Application{}, &ApplicationDocument{})
 	if err != nil {
-		return []Order{}, err
+		return nil, fmt.Errorf("ошибка миграции: %v", err)
 	}
 
-	var result []Order
-	for _, order := range orders {
-		if strings.Contains(strings.ToLower(order.Title), strings.ToLower(title)) {
-			result = append(result, order)
-		}
-	}
-
-	return result, nil
+	fmt.Println("Подключение к PostgreSQL успешно")
+	return &Repository{db: db}, nil
 }
 
-func (r *Repository) GetApplication(id int) (Application, error) {
-	applications := []Application{
-		{
-			ID: 1,
-			Documents: []Document{
-				{
-					Title:   "Техническое задание на модуль авторизации",
-					Authors: []string{"Найденко А.В.", "Иванов И.И."},
-					Emails:  []string{"naidenko@mail.ru", "ivanov@mail.ru"},
-					Status:  "open",
-				},
-				{
-					Title:   "API спецификация сервиса",
-					Authors: []string{"Петров П.П."},
-					Emails:  []string{"petrov@mail.ru"},
-					Status:  "closed",
-				},
-			},
-		},
-		{
-			ID: 2,
-			Documents: []Document{
-				{
-					Title:   "Отчёт по нагрузочному тестированию",
-					Authors: []string{"Иванов И.И.", "Петров П.П."},
-					Emails:  []string{"ivanov@mail.ru", "petrov@mail.ru"},
-					Status:  "closed",
-				},
-				{
-					Title:   "Матрица распределения задач",
-					Authors: []string{"Сидоров С.С."},
-					Emails:  []string{"sidorov@mail.ru"},
-					Status:  "open",
-				},
-			},
-		},
-	}
+//
+// ========== МЕТОДЫ DOCUMENTS ==========
+//
 
-	// Ищем заявку по ID
-	for _, app := range applications {
-		if app.ID == id {
-			return app, nil
-		}
-	}
+func (r *Repository) GetAllDocuments() ([]Document, error) {
+	var docs []Document
+	result := r.db.
+		Preload("Author").
+		Preload("Editor").
+		Preload("Approver").
+		Find(&docs)
 
-	return Application{}, fmt.Errorf("заявка с ID %d не найдена", id)
+	return docs, result.Error
 }
 
+func (r *Repository) GetDocumentsByTitle(title string) ([]Document, error) {
+	var docs []Document
+	result := r.db.
+		Where("title ILIKE ?", "%"+title+"%").
+		Preload("Author").
+		Preload("Editor").
+		Preload("Approver").
+		Find(&docs)
 
+	return docs, result.Error
+}
+
+func (r *Repository) GetDocumentByID(id uint) (Document, error) {
+	var doc Document
+	result := r.db.
+		Preload("Author").
+		Preload("Editor").
+		Preload("Approver").
+		First(&doc, id)
+
+	return doc, result.Error
+}
+
+//
+// ========== МЕТОДЫ APPLICATION (ОДНА ЗАЯВКА) ==========
+//
+
+// Найти или создать единственную заявку
+func (r *Repository) GetOrCreateDraftApplication() (Application, error) {
+    var app Application
+
+    result := r.db.
+        Preload("Documents").
+        Preload("Documents.Author").
+        Preload("Documents.Editor").
+        Preload("Documents.Approver").
+        Where("status = ? AND is_deleted = FALSE", "draft").
+        First(&app)
+
+    if result.Error == nil {
+        return app, nil
+    }
+
+    // Создаём новую заявку
+    app = Application{
+        Title:  "Заявка",
+        Status: "draft",
+    }
+
+    if err := r.db.Create(&app).Error; err != nil {
+        return Application{}, err
+    }
+
+    return app, nil
+}
+
+// Добавить документ в заявку
+func (r *Repository) AddDocumentToApplication(appID, docID uint) error {
+	var app Application
+	var doc Document
+
+	if err := r.db.First(&app, appID).Error; err != nil {
+		return err
+	}
+	if err := r.db.First(&doc, docID).Error; err != nil {
+		return err
+	}
+
+	return r.db.Model(&app).Association("Documents").Append(&doc)
+}
+
+// Очистить заявку (полностью убрать все документы)
+func (r *Repository) ClearApplication(appID uint) error {
+	var app Application
+
+	if err := r.db.First(&app, appID).Error; err != nil {
+		return err
+	}
+
+	return r.db.Model(&app).Association("Documents").Clear()
+}
+
+func (r *Repository) GetApplicationByID(id uint) (Application, error) {
+	var app Application
+
+	result := r.db.
+		Preload("Documents").
+		Preload("Documents.Author").
+		Preload("Documents.Editor").
+		Preload("Documents.Approver").
+		First(&app, id)
+
+	return app, result.Error
+}
+
+func (r *Repository) DeleteApplicationByID(id uint) error {
+    return r.db.Model(&Application{}).
+        Where("application_id = ?", id).
+        Update("is_deleted", true).Error
+}
+
+func (r *Repository) GetUserByEmail(email string) (User, error) {
+	var user User
+	err := r.db.Where("email = ?", email).First(&user).Error
+	return user, err
+}

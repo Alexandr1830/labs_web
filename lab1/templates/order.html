@@ -9,18 +9,12 @@
   <!-- ШАПКА -->
   <header class="app-header">
     <div class="header-left">
-      <a href="/hello" class="logo-wrap">
+      <a href="/" class="logo-wrap">
         <img src="/resources/img/docs_2020q4_48dp.png" alt="Документы" class="logo">
       </a>
-      <a href="/hello" class="title-link">
+      <a href="/" class="title-link">
         <span class="title">Документы</span>
       </a>
-    </div>
-
-    <div class="header-right">
-      <div class="avatar">
-        <img src="/resources/img/A.png" alt="User" class="avatar">
-      </div>
     </div>
   </header>
 
@@ -32,21 +26,47 @@
       <div class="doc-info">
         <h2 class="doc-title">{{ .Title }}</h2>
 
-        <p><strong>Автор(ы):</strong></p>
-        <ul class="author-list">
-          {{ range .Author }}
-            <li>{{ . }}</li>
-          {{ end }}
-        </ul>
-
-        <p><strong>Дата создания:</strong> {{ .Date }}</p>
-        <p><strong>Последнее изменение:</strong> {{ .LastEdit }}</p>
-        <p class="doc-description">{{ .Description }}</p>
-
-        <!-- ✅ Кнопка теперь внутри карточки -->
-        <div class="edit-btn-wrapper">
-          <a href="/edit/{{ .ID }}" class="edit-btn large">Редактировать</a>
+        <!-- Авторы -->
+        <div class="authors-block">
+          <p><strong>Автор:</strong></p>
+          <ul class="author-list">
+            <li>{{ .Author.Username }}</li>
+          </ul>
         </div>
+
+        {{ if .Editor.Username }}
+        <div class="authors-block">
+          <p><strong>Редактор:</strong></p>
+          <ul class="author-list">
+            <li>{{ .Editor.Username }}</li>
+          </ul>
+        </div>
+        {{ end }}
+
+        {{ if .Approver.Username }}
+        <div class="authors-block">
+          <p><strong>Аппрувер:</strong></p>
+          <ul class="author-list">
+            <li>{{ .Approver.Username }}</li>
+          </ul>
+        </div>
+        {{ end }}
+
+
+        <p><strong>Тип документа:</strong> {{ .Type }}</p>
+        <p><strong>Дата создания:</strong> {{ formatDate .CreatedAt }}</p>
+        <p><strong>Последнее изменение:</strong> {{ formatDate .UpdatedAt }}</p>
+
+        {{ if .Description }}
+          <p class="doc-description">{{ .Description }}</p>
+        {{ end }}
+
+        <div class="edit-btn-wrapper">
+          <form action="/application/add/{{ .DocumentID }}" method="POST" style="margin-top:20px;">
+            <button type="submit" class="edit-btn large">Редактировать</button>
+          </form>
+        </div>
+
       </div>
     </div>
   </main>

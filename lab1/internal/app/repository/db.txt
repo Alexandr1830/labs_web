@@ -1,38 +1,31 @@
-// ====== Схема БД для проекта "Документы и заявки" ======
-
-// --- Авторы (люди, участвующие в документах)
-Table authors {
+\Table authors {
   id           int [pk, increment]
   full_name    varchar(100) [not null]
   email        varchar(100) [unique, not null]
 }
 
-// --- Документы (все карточки с сайта)
 Table documents {
   id           int [pk, increment]
-  title        varchar(255) [not null]          // название документа
-  type         varchar(10) [not null]           // тип файла (DOC, XLS, SQL)
-  description  text                             // описание (страница 2)
-  date_created date [not null]                  // дата создания
-  last_edit    date                             // последняя правка
-  status_id    int [ref: > statuses.id]         // ссылка на статус документа
+  title        varchar(255) [not null]  
+  type         varchar(10) [not null]     
+  description  text      
+  date_created date [not null]    
+  last_edit    date            
+  status_id    int [ref: > statuses.id]
 }
 
-// --- Статусы (открыт / закрыт и т.п.)
 Table statuses {
   id           int [pk, increment]
   name         varchar(50) [not null]           // например: "open", "closed"
 }
 
-// --- Заявки (страница 3)
 Table applications {
   id           int [pk, increment]
-  title        varchar(255) [not null]          // название заявки
-  status_id    int [ref: > statuses.id]         // статус заявки
+  title        varchar(255) [not null]  
+  status_id    int [ref: > statuses.id] 
   created_at   timestamp [not null]
 }
 
-// --- Связь документы ↔ авторы (многие ко многим)
 Table document_authors {
   document_id  int [ref: > documents.id]
   author_id    int [ref: > authors.id]
@@ -41,7 +34,6 @@ Table document_authors {
   }
 }
 
-// --- Связь заявки ↔ документы (многие ко многим)
 Table application_documents {
   application_id int [ref: > applications.id]
   document_id    int [ref: > documents.id]

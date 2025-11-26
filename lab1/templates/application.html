@@ -2,70 +2,75 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <title>Заявка №{{ .ID }}</title>
+  <title>Заявка #{{ .ApplicationID }}</title>
   <link rel="stylesheet" href="/resources/styles/application_style.css">
 </head>
 <body>
-  <!-- ШАПКА -->
+
+  <!-- ===== ШАПКА ===== -->
   <header class="app-header">
     <div class="header-left">
-      <a href="/hello" class="logo-wrap">
-        <img src="/resources/img/docs_2020q4_48dp.png" alt="Заявки" class="logo">
+      <a href="/" class="logo-wrap">
+        <img src="/resources/img/docs_2020q4_48dp.png" class="logo" alt="Документы">
       </a>
-      <a href="/hello" class="title-link">
-        <span class="title">Заявки</span>
+      <a href="/" class="title-link">
+        <span class="title">Документы</span>
       </a>
-    </div>
-
-    <div class="header-right">
-      <div class="avatar">
-        <img src="/resources/img/A.png" alt="User" class="avatar">
-      </div>
     </div>
   </header>
 
-  <!-- КОНТЕНТ -->
+  <!-- ===== КОНТЕНТ ===== -->
   <main class="content">
-    <div class="application-container">
-      <h2 class="application-title">Заявка №{{ .ID }}</h2>
 
-      <table class="application-table">
-        <thead>
-          <tr>
-            <th>№</th>
-            <th>Документ</th>
-            <th>Авторы</th>
-            <th>Почты авторов</th>
-            <th>Статус</th>
-          </tr>
-        </thead>
-        <tbody>
-          {{ range $index, $doc := .Documents }}
-          <tr>
-            <td>{{ add $index 1 }}</td>
-            <td>{{ $doc.Title }}</td>
-            <td>
-              {{ range $doc.Authors }}
-                <div>{{ . }}</div>
-              {{ end }}
-            </td>
-            <td>
-              {{ range $doc.Emails }}
-                <div>{{ . }}</div>
-              {{ end }}
-            </td>
-            <td>
-              {{ if eq $doc.Status "open" }}
-                <span class="status-open">Открыто</span>
-              {{ else }}
-                <span class="status-closed">Закрыто</span>
-              {{ end }}
-            </td>
-          </tr>
-          {{ end }}
-        </tbody>
-      </table>
+    <!-- Заголовок заявки -->
+    <div class="application-header">
+        <h2 class="app-title">Заявка #{{ .ApplicationID }}</h2>
+
+        <div class="app-meta">
+            <p><strong>Статус:</strong> {{ .Status }}</p>
+            <p><strong>Дата создания:</strong> {{ formatDate .CreatedAt }}</p>
+        </div>
     </div>
+
+    <!-- Список документов -->
+    <h3 class="docs-title">Документы в заявке</h3>
+
+    <div class="docs-container">
+      {{ if .Documents }}
+
+        {{ range .Documents }}
+        <div class="doc-card">
+
+            <div class="doc-card-left">
+              <img src="/resources/img/{{ .Type }}.png" class="doc-icon">
+            </div>
+
+            <div class="doc-card-right">
+              <h3 class="doc-title">{{ .Title }}</h3>
+
+              <p class="doc-field"><strong>Тип:</strong> {{ .Type }}</p>
+              <p class="doc-field"><strong>Автор:</strong> {{ .Author.Username }}</p>
+              <p class="doc-field"><strong>Статус:</strong> {{ .Status }}</p>
+              <p class="doc-field"><strong>Создан:</strong> {{ formatDate .CreatedAt }}</p>
+            </div>
+
+        </div>
+        {{ end }}
+
+      {{ else }}
+        <p class="empty">Документов пока нет</p>
+      {{ end }}
+    </div>
+
+    <!-- ===== Кнопка "Очистить заявку" ===== -->
+    <div class="delete-btn-wrapper">
+      <form method="POST" action="/application/{{ .ApplicationID }}/delete">
+        <button class="delete-btn">Удалить заявку</button>
+      </form>
+
+    </div>
+
   </main>
+
 </body>
 </html>

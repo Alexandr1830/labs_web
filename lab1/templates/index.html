@@ -62,10 +62,17 @@ document.addEventListener("DOMContentLoaded", () => {
     </form>
 
     <!-- Заявка -->
-    <a href="/application/{{ .AppID }}" class="cart-link" style="text-decoration:none;">
-      <img src="/resources/img/cart.png" class="cart-icon" alt="Заявка">
-      <span class="cart-count">{{ .AppCount }}</span>
-    </a>
+    {{ if .AppID }}
+      <a href="/application/{{ .AppID }}" class="cart-link" style="text-decoration:none;">
+        <img src="/resources/img/cart.png" class="cart-icon" alt="Заявка">
+        <span class="cart-count">{{ .AppCount }}</span>
+      </a>
+    {{ else }}
+      <div class="cart-link" style="opacity:0.5; pointer-events:none; text-decoration:none;">
+        <img src="/resources/img/cart.png" class="cart-icon" alt="Заявка">
+        <span class="cart-count">{{ .AppCount }}</span>
+      </div>
+    {{ end }}
 
   </div>
 
@@ -76,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="cards">
       {{ range .orders }}
 
-      <a href="/order/{{ .DocumentID }}" class="card-link">
+      <a href="/order/{{ .ServiceID }}" class="card-link">
         <div class="card">
 
           <!-- Иконка -->
@@ -87,21 +94,18 @@ document.addEventListener("DOMContentLoaded", () => {
           <hr class="card-line">
 
           <!-- Информация -->
-          <div class="card-info">
+          <div class="card-info centered">
 
-            <div class="meta-left">
-              <span class="card-title">{{ .Title }}</span>
-
-              <div style="display:flex;align-items:center;gap:5px;">
-                <img src="/resources/img/user.png" class="author-icon">
-                <span class="card-date">{{ .Author.Username }}</span>
-              </div>
-
-              <span class="card-date">Тип: {{ .Type }}</span>
+            <div class="meta-left centered">
+              <span class="card-title center">{{ .Title }}</span>
+              <span class="card-date center">Тип: {{ .Type }}</span>
+              <span class="card-date center">Автор: {{ if .Creator.Username }}{{ .Creator.Username }}{{ else }}-{{ end }}</span>
+              <span class="card-date center">Создан: {{ formatDate .CreatedAt }}</span>
+              <span class="card-date center">Статус: {{ .Status }}</span>
             </div>
 
             <!-- Добавить в заявку -->
-            <form method="POST" action="/application/add/{{ .DocumentID }}" onclick="event.stopPropagation();">
+            <form method="POST" action="/application/add/{{ .ServiceID }}" onclick="event.stopPropagation();" class="center">
               <button class="edit-btn">Добавить</button>
             </form>
 

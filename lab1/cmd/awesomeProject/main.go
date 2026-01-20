@@ -34,7 +34,8 @@ func main() {
 	// === 3. Создаём обработчик (handler) ===
 	hand := handler.NewHandler(rep)
 
-	// === 4. Инициализируем и запускаем приложение ===
+	// === 4. Регистрируем API и статическую часть ===
+	hand.RegisterAPI(router)
 	application := pkg.NewApp(conf, router, hand)
 	application.RunApp()
 }

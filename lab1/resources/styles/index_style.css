@@ -189,7 +189,9 @@ body {
   padding: 10px 14px 14px 14px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
   height: 100%;
 }
 
@@ -202,7 +204,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 
-  text-align: left; /* пока так, потом вернём центр */
+  text-align: center;
 }
 
 .card-meta {
@@ -214,8 +216,8 @@ body {
 .meta-left {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
+  align-items: center;
+  gap: 6px;
 
   width: 100%;
   min-width: 0;   /* ← важно */
@@ -231,7 +233,9 @@ body {
   font-size: 11px;
   line-height: 1.2;
   color: #5f6368;
-  margin-left: 3px;
+  margin-left: 0;
+  text-align: center;
+  width: 100%;
 }
 
 .edit-btn {
@@ -244,6 +248,7 @@ body {
   color: #202124;
   font-size: 11px;
   transition: background 0.2s ease;
+  align-self: center;
 }
 
 .edit-btn:hover {

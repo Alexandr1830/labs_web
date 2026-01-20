@@ -1,0 +1,245 @@
+{
+  "info": {
+    "_postman_id": "c66ce163-1234-4c40-9ad2-collection",
+    "name": "Lab1 API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth - Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/auth/register",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"new user\",\n  \"email\": \"new@mail.ru\",\n  \"password\": \"pass123\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Auth - Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"ivanov@mail.ru\",\n  \"password\": \"hash123\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Auth - Logout",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/logout"
+      }
+    },
+    {
+      "name": "Profile - Get",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/profile"
+      }
+    },
+    {
+      "name": "Profile - Update",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/profile",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"Иван Иванов\",\n  \"email\": \"ivanov@mail.ru\",\n  \"password\": \"\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Services - List (filters)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/services?status=active&q=API",
+          "host": ["{{baseUrl}}"],
+          "path": ["services"],
+          "query": [
+            { "key": "status", "value": "active" },
+            { "key": "q", "value": "API" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Services - Get one",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/services/1"
+      }
+    },
+    {
+      "name": "Services - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/services",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Новая услуга\",\n  \"type\": \"doc\",\n  \"description\": \"Описание\",\n  \"status\": \"active\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Services - Update",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/services/1",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Обновлённая услуга\",\n  \"type\": \"doc\",\n  \"description\": \"Новое описание\",\n  \"status\": \"active\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Services - Delete",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/services/1"
+      }
+    },
+    {
+      "name": "Services - Upload image",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/services/1/image",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Cart - Icon",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/cart"
+      }
+    },
+    {
+      "name": "Services - Add to draft",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/services/1/add-to-cart"
+      }
+    },
+    {
+      "name": "Applications - List (filters)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/applications?status=formed&from=2025-01-01&to=2026-12-31",
+          "host": ["{{baseUrl}}"],
+          "path": ["applications"],
+          "query": [
+            { "key": "status", "value": "formed" },
+            { "key": "from", "value": "2025-01-01" },
+            { "key": "to", "value": "2026-12-31" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Applications - Get one",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/applications/1"
+      }
+    },
+    {
+      "name": "Applications - Update fields",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/applications/1",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Заявка на услуги\",\n  \"description\": \"Комментарий\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Applications - Submit (draft -> formed)",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/applications/1/submit"
+      }
+    },
+    {
+      "name": "Applications - Complete (formed -> completed)",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/applications/1/complete"
+      }
+    },
+    {
+      "name": "Applications - Reject (formed -> rejected)",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/applications/1/reject"
+      }
+    },
+    {
+      "name": "Applications - Delete (draft only)",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/applications/1"
+      }
+    },
+    {
+      "name": "Application services - Update qty/position/is_primary",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/applications/1/services/1",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"quantity\": 2,\n  \"position\": 1,\n  \"is_primary\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "Application services - Delete",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/applications/1/services/1"
+      }
+    }
+  ]
+}

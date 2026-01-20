@@ -32,13 +32,13 @@
         </div>
     </div>
 
-    <!-- Список документов -->
-    <h3 class="docs-title">Документы в заявке</h3>
+    <!-- Список услуг -->
+    <h3 class="docs-title">Услуги в заявке</h3>
 
     <div class="docs-container">
-      {{ if .Documents }}
+      {{ if .Services }}
 
-        {{ range .Documents }}
+        {{ range .Services }}
         <div class="doc-card">
 
             <div class="doc-card-left">
@@ -48,17 +48,46 @@
             <div class="doc-card-right">
               <h3 class="doc-title">{{ .Title }}</h3>
 
-              <p class="doc-field"><strong>Тип:</strong> {{ .Type }}</p>
-              <p class="doc-field"><strong>Автор:</strong> {{ .Author.Username }}</p>
-              <p class="doc-field"><strong>Статус:</strong> {{ .Status }}</p>
-              <p class="doc-field"><strong>Создан:</strong> {{ formatDate .CreatedAt }}</p>
+              <table class="details-table">
+                <thead>
+                  <tr>
+                    <th>Тип</th>
+                    <th>Статус</th>
+                    <th>Доступ</th>
+                    <th>Создан</th>
+                    <th>Автор заявки</th>
+                    <th>Модератор</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>{{ .Type }}</td>
+                    <td>{{ .Status }}</td>
+                    <td class="access-cell">
+                      <form class="access-form" method="POST" action="/application/{{ $.ApplicationID }}/service/{{ .ServiceID }}/access">
+                        <label class="access-option">
+                          <input type="radio" name="access_level" value="1" {{ if eq .AccessLevel 1.0 }}checked{{ end }} onchange="this.form.submit()">
+                          <span>Чтение</span>
+                        </label>
+                        <label class="access-option">
+                          <input type="radio" name="access_level" value="2" {{ if eq .AccessLevel 2.0 }}checked{{ end }} onchange="this.form.submit()">
+                          <span>Запись</span>
+                        </label>
+                      </form>
+                    </td>
+                    <td>{{ formatDate .CreatedAt }}</td>
+                    <td>{{ if $.Creator.Username }}{{ $.Creator.Username }}{{ else }}-{{ end }}</td>
+                    <td>{{ if $.Moderator }}{{ $.Moderator.Username }}{{ else }}-{{ end }}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
         </div>
         {{ end }}
 
       {{ else }}
-        <p class="empty">Документов пока нет</p>
+        <p class="empty">Услуг пока нет</p>
       {{ end }}
     </div>
 

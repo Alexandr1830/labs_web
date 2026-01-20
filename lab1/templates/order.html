@@ -26,46 +26,14 @@
       <div class="doc-info">
         <h2 class="doc-title">{{ .Title }}</h2>
 
-        <!-- Авторы -->
-        <div class="authors-block">
-          <p><strong>Автор:</strong></p>
-          <ul class="author-list">
-            <li>{{ .Author.Username }}</li>
-          </ul>
-        </div>
-
-        {{ if .Editor.Username }}
-        <div class="authors-block">
-          <p><strong>Редактор:</strong></p>
-          <ul class="author-list">
-            <li>{{ .Editor.Username }}</li>
-          </ul>
-        </div>
-        {{ end }}
-
-        {{ if .Approver.Username }}
-        <div class="authors-block">
-          <p><strong>Аппрувер:</strong></p>
-          <ul class="author-list">
-            <li>{{ .Approver.Username }}</li>
-          </ul>
-        </div>
-        {{ end }}
-
-
-        <p><strong>Тип документа:</strong> {{ .Type }}</p>
+        <p><strong>Тип услуги:</strong> {{ .Type }}</p>
         <p><strong>Дата создания:</strong> {{ formatDate .CreatedAt }}</p>
         <p><strong>Последнее изменение:</strong> {{ formatDate .UpdatedAt }}</p>
+        <p><strong>Статус:</strong> {{ .Status }}</p>
 
         {{ if .Description }}
           <p class="doc-description">{{ .Description }}</p>
         {{ end }}
-
-        <div class="edit-btn-wrapper">
-          <form action="/application/add/{{ .DocumentID }}" method="POST" style="margin-top:20px;">
-            <button type="submit" class="edit-btn large">Редактировать</button>
-          </form>
-        </div>
 
       </div>
     </div>

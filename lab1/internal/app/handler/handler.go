@@ -3,7 +3,6 @@ package handler
 import (
 	"fmt"
 	"html/template"
-	"lab1/internal/app/middleware"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -11,10 +10,11 @@ import (
 	"strings"
 	"time"
 
+	"lab1/internal/app/auth"
+	"lab1/internal/app/middleware"
 	"lab1/internal/app/repository"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/sirupsen/logrus"
 )
 
@@ -119,16 +119,10 @@ func (h *Handler) GetDocuments(ctx *gin.Context) {
 	appCount := 0
 	var appID uint
 	if token, err := ctx.Cookie("token"); err == nil && token != "" {
-		if parsed, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
-			return []byte("your-secret-key"), nil
-		}); err == nil && parsed.Valid {
-			if claims, ok := parsed.Claims.(jwt.MapClaims); ok {
-				if uid, ok := claims["user_id"].(float64); ok {
-					if app, err := h.Repository.GetDraftAccessRequest(uint(uid)); err == nil {
-						appCount = len(app.Documents)
-						appID = app.AccessRequestID
-					}
-				}
+		if claims, err := auth.ParseToken(token); err == nil {
+			if app, err := h.Repository.GetDraftAccessRequest(claims.UserID); err == nil {
+				appCount = len(app.Documents)
+				appID = app.AccessRequestID
 			}
 		}
 	}
@@ -290,13 +284,11 @@ func (h *Handler) LoginUser(ctx *gin.Context) {
 		return
 	}
 
-	// === СОЗДАЁМ JWT ТОКЕН ===
-	tokenStruct := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": user.UserID,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(),
-	})
-
-	tokenString, err := tokenStruct.SignedString([]byte("your-secret-key"))
+	role := 0
+	if user.IsModerator {
+		role = 1
+	}
+	tokenString, _, _, err := auth.GenerateToken(user.UserID, role)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "token generation failed"})
 		return
@@ -316,10 +308,8 @@ func (h *Handler) LoginUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "ok"})
 }
 
+// createToken — выпускает JWT для текущего пользователя через общий пакет auth.
 func (h *Handler) createToken(uid uint) (string, error) {
-	tokenStruct := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": uid,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(),
-	})
-	return tokenStruct.SignedString([]byte("your-secret-key"))
+	tok, _, _, err := auth.GenerateToken(uid, 0)
+	return tok, err
 }

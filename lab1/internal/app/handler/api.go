@@ -10,50 +10,73 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/minio/minio-go/v7"
 
+	"lab1/internal/app/auth"
+	"lab1/internal/app/middleware"
 	"lab1/internal/app/repository"
 	"lab1/internal/app/storage"
 	"lab1/internal/app/userctx"
 )
 
-// RegisterAPI attaches REST endpoints under /api.
+// currentUser — достаёт user_id из контекста (JWT middleware), иначе берёт singleton.
+// Это позволяет хендлерам работать и в обычном режиме (lab3-style singleton),
+// и под авторизацией (lab4-style JWT).
+func currentUser(ctx *gin.Context) uint {
+	if v, ok := ctx.Get("user_id"); ok {
+		if id, ok := v.(uint); ok && id > 0 {
+			return id
+		}
+	}
+	return userctx.CurrentUserID()
+}
+
+// RegisterAPI — раскладывает endpoints по группам доступа.
+// Гостям доступны только чтение и аутентификация.
+// Авторизованным — операции создателя заявки.
+// Модератору — управление документами и одобрение заявок.
 func (h *Handler) RegisterAPI(router *gin.Engine) {
 	api := router.Group("/api")
 
-	// Documents
-	api.GET("/documents", h.apiGetDocuments)
-	api.GET("/documents/:id", h.apiGetDocument)
-	api.POST("/documents", h.apiCreateDocument)
-	api.PUT("/documents/:id", h.apiUpdateDocument)
-	api.DELETE("/documents/:id", h.apiDeleteDocument)
-	api.POST("/documents/:id/image", h.apiUploadDocumentImage)
-
-	// Add to draft (auto-create draft, по ТЗ 4.1.13)
-	api.POST("/document-requests/add-to-draft", h.apiAddDocumentToDraft)
-	// Add document to specific request (по ТЗ 4.1.12)
-	api.POST("/document-requests/:id/documents/:documentId", h.apiAddDocumentToRequest)
-
-	// Cart
-	api.GET("/cart-icon", h.apiGetCartIcon)
-
-	// AccessRequests
-	api.GET("/document-requests", h.apiListAccessRequests)
-	api.GET("/document-requests/:id", h.apiGetAccessRequest)
-	api.PUT("/document-requests/:id", h.apiUpdateAccessRequest)
-	api.PUT("/document-requests/:id/form", h.apiSubmitAccessRequest)
-	api.PUT("/document-requests/:id/complete", h.apiCompleteAccessRequest)
-	api.PUT("/document-requests/:id/reject", h.apiRejectAccessRequest)
-	api.DELETE("/document-requests/:id", h.apiDeleteAccessRequestAPI)
-
-	// AccessRequest documents (m-m)
-	api.PUT("/document-requests/:id/documents/:documentId", h.apiUpdateRequestDocument)
-	api.DELETE("/document-requests/:id/documents/:documentId", h.apiDeleteRequestDocument)
-
-	// Users
+	// ===== Гости (без токена) =====
 	api.POST("/sign_up", h.apiRegisterUser)
 	api.POST("/login", h.apiLogin)
-	api.POST("/logout", h.apiLogout)
-	api.GET("/profile", h.apiGetProfile)
-	api.PUT("/profile", h.apiUpdateProfile)
+	api.GET("/documents", h.apiGetDocuments)
+	api.GET("/documents/:id", h.apiGetDocument)
+
+	// ===== Авторизованные пользователи =====
+	authed := api.Group("/", middleware.RequireAuth())
+	{
+		authed.POST("/logout", h.apiLogout)
+		authed.GET("/profile", h.apiGetProfile)
+		authed.PUT("/profile", h.apiUpdateProfile)
+
+		// Корзина и заявки текущего пользователя
+		authed.GET("/cart-icon", h.apiGetCartIcon)
+		authed.GET("/document-requests", h.apiListAccessRequests)
+		authed.GET("/document-requests/:id", h.apiGetAccessRequest)
+		authed.PUT("/document-requests/:id", h.apiUpdateAccessRequest)
+		authed.PUT("/document-requests/:id/form", h.apiSubmitAccessRequest)
+		authed.DELETE("/document-requests/:id", h.apiDeleteAccessRequestAPI)
+
+		// м-м: добавить/обновить/удалить документ в заявке
+		authed.POST("/document-requests/add-to-draft", h.apiAddDocumentToDraft)
+		authed.POST("/document-requests/:id/documents/:documentId", h.apiAddDocumentToRequest)
+		authed.PUT("/document-requests/:id/documents/:documentId", h.apiUpdateRequestDocument)
+		authed.DELETE("/document-requests/:id/documents/:documentId", h.apiDeleteRequestDocument)
+	}
+
+	// ===== Модератор =====
+	mod := api.Group("/", middleware.RequireAuth(), middleware.RequireRole(middleware.RoleModerator))
+	{
+		// CRUD документов — только модератор
+		mod.POST("/documents", h.apiCreateDocument)
+		mod.PUT("/documents/:id", h.apiUpdateDocument)
+		mod.DELETE("/documents/:id", h.apiDeleteDocument)
+		mod.POST("/documents/:id/image", h.apiUploadDocumentImage)
+
+		// Завершить/отклонить заявку — только модератор
+		mod.PUT("/document-requests/:id/complete", h.apiCompleteAccessRequest)
+		mod.PUT("/document-requests/:id/reject", h.apiRejectAccessRequest)
+	}
 }
 
 // ===== Documents =====
@@ -107,7 +130,7 @@ func (h *Handler) apiCreateDocument(ctx *gin.Context) {
 		Description: req.Description,
 		Status:      req.Status,
 		ImageURL:    req.ImageURL,
-		CreatorID:   userctx.CurrentUserID(),
+		CreatorID:   currentUser(ctx),
 	}
 	if svc.Status == "" {
 		svc.Status = "active"
@@ -165,7 +188,7 @@ func (h *Handler) apiAddDocumentToDraft(ctx *gin.Context) {
 		h.errorHandler(ctx, 400, fmt.Errorf("document_id required"))
 		return
 	}
-	userID := userctx.CurrentUserID()
+	userID := currentUser(ctx)
 	app, err := h.Repository.GetOrCreateDraftAccessRequest(userID)
 	if err != nil {
 		h.errorHandler(ctx, 500, err)
@@ -259,7 +282,7 @@ func (h *Handler) apiUploadDocumentImage(ctx *gin.Context) {
 
 // ===== Cart icon =====
 func (h *Handler) apiGetCartIcon(ctx *gin.Context) {
-	userID := userctx.CurrentUserID()
+	userID := currentUser(ctx)
 	app, err := h.Repository.GetDraftAccessRequest(userID)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"request_id": nil, "cart_count": 0})
@@ -339,7 +362,7 @@ func (h *Handler) apiSubmitAccessRequest(ctx *gin.Context) {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
-	if err := h.Repository.MarkAccessRequestSubmitted(uint(id), userctx.CurrentUserID()); err != nil {
+	if err := h.Repository.MarkAccessRequestSubmitted(uint(id), currentUser(ctx)); err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
@@ -352,7 +375,7 @@ func (h *Handler) apiCompleteAccessRequest(ctx *gin.Context) {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
-	if err := h.Repository.MarkAccessRequestCompleted(uint(id), userctx.CurrentModeratorID()); err != nil {
+	if err := h.Repository.MarkAccessRequestCompleted(uint(id), currentUser(ctx)); err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
@@ -365,7 +388,7 @@ func (h *Handler) apiRejectAccessRequest(ctx *gin.Context) {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
-	if err := h.Repository.MarkAccessRequestRejected(uint(id), userctx.CurrentModeratorID()); err != nil {
+	if err := h.Repository.MarkAccessRequestRejected(uint(id), currentUser(ctx)); err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
@@ -384,7 +407,7 @@ func (h *Handler) apiDeleteAccessRequestAPI(ctx *gin.Context) {
 		h.errorHandler(ctx, 404, err)
 		return
 	}
-	if app.Status != repository.StatusDraft || app.CreatorID != userctx.CurrentUserID() {
+	if app.Status != repository.StatusDraft || app.CreatorID != currentUser(ctx) {
 		h.errorHandler(ctx, 400, fmt.Errorf("delete allowed only for own draft"))
 		return
 	}
@@ -467,6 +490,8 @@ func (h *Handler) apiRegisterUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"id": u.UserID, "username": u.Username, "email": u.Email})
 }
 
+// apiLogin — выпускает JWT с role внутри claims; кладёт в cookie И возвращает
+// access_token в теле ответа (по ТЗ 4.1.2).
 func (h *Handler) apiLogin(ctx *gin.Context) {
 	var req userPayload
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -478,37 +503,57 @@ func (h *Handler) apiLogin(ctx *gin.Context) {
 		h.errorHandler(ctx, 401, fmt.Errorf("invalid credentials"))
 		return
 	}
-	tokenString, err := h.createToken(user.UserID)
+	role := middleware.RoleUser
+	if user.IsModerator {
+		role = middleware.RoleModerator
+	}
+	token, _, expiresIn, err := auth.GenerateToken(user.UserID, role)
 	if err != nil {
 		h.errorHandler(ctx, 500, err)
 		return
 	}
-	ctx.SetCookie("token", tokenString, 86400, "/", "localhost", false, true)
-	ctx.JSON(http.StatusOK, gin.H{"message": "ok"})
+	ctx.SetCookie("token", token, int(expiresIn), "/", "localhost", false, true)
+	ctx.JSON(http.StatusOK, gin.H{
+		"access_token": token,
+		"token_type":   "Bearer",
+		"expires_in":   expiresIn,
+	})
 }
 
+// apiLogout — отзывает текущий jti через Redis blacklist (по ТЗ 4.1.3).
+// Cookie тоже очищается, чтобы браузер не присылал старый токен.
 func (h *Handler) apiLogout(ctx *gin.Context) {
+	if v, ok := ctx.Get("jti"); ok {
+		if jti, ok := v.(string); ok && jti != "" {
+			// TTL берём из exp токена в контексте; если не нашли — 24 часа
+			ttl := int64(24 * 60 * 60)
+			_ = auth.BlacklistJTI(ctx.Request.Context(), jti, ttl)
+		}
+	}
 	ctx.SetCookie("token", "", -1, "/", "localhost", false, true)
 	ctx.JSON(http.StatusOK, gin.H{"message": "logged out"})
 }
 
 func (h *Handler) apiGetProfile(ctx *gin.Context) {
-	userID := userctx.CurrentUserID()
+	userID := currentUser(ctx)
 	user, err := h.Repository.GetUserByID(userID)
 	if err != nil {
 		h.errorHandler(ctx, 404, err)
 		return
 	}
+	role := 0
+	if user.IsModerator {
+		role = 1
+	}
 	ctx.JSON(http.StatusOK, gin.H{
-		"id":       user.UserID,
-		"email":    user.Email,
-		"username": user.Username,
-		"role":     user.Role,
+		"uuid":  fmt.Sprintf("%d", user.UserID),
+		"login": user.Username,
+		"role":  role,
 	})
 }
 
 func (h *Handler) apiUpdateProfile(ctx *gin.Context) {
-	userID := userctx.CurrentUserID()
+	userID := currentUser(ctx)
 	var req userPayload
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		h.errorHandler(ctx, 400, err)

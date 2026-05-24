@@ -2,8 +2,8 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <title>Заявка #{{ .ApplicationID }}</title>
-  <link rel="stylesheet" href="/resources/styles/application_style.css">
+  <title>Заявка #{{ .AccessRequestID }}</title>
+  <link rel="stylesheet" href="/resources/styles/request_style.css">
 </head>
 <body>
 
@@ -23,8 +23,8 @@
   <main class="content">
 
     <!-- Заголовок заявки -->
-    <div class="application-header">
-        <h2 class="app-title">Заявка #{{ .ApplicationID }}</h2>
+    <div class="request-header">
+        <h2 class="app-title">Заявка #{{ .AccessRequestID }}</h2>
 
         <div class="app-meta">
             <p><strong>Статус:</strong> {{ .Status }}</p>
@@ -32,13 +32,13 @@
         </div>
     </div>
 
-    <!-- Список услуг -->
-    <h3 class="docs-title">Услуги в заявке</h3>
+    <!-- Список документов -->
+    <h3 class="docs-title">Документы в заявке</h3>
 
     <div class="docs-container">
-      {{ if .Services }}
+      {{ if .Documents }}
 
-        {{ range .Services }}
+        {{ range .Documents }}
         <div class="doc-card">
 
             <div class="doc-card-left">
@@ -64,7 +64,7 @@
                     <td>{{ .Type }}</td>
                     <td>{{ .Status }}</td>
                     <td class="access-cell">
-                      <form class="access-form" method="POST" action="/application/{{ $.ApplicationID }}/service/{{ .ServiceID }}/access">
+                      <form class="access-form" method="POST" action="/document-request/{{ $.AccessRequestID }}/document/{{ .DocumentID }}/access">
                         <label class="access-option">
                           <input type="radio" name="access_level" value="1" {{ if eq .AccessLevel 1.0 }}checked{{ end }} onchange="this.form.submit()">
                           <span>Чтение</span>
@@ -87,13 +87,13 @@
         {{ end }}
 
       {{ else }}
-        <p class="empty">Услуг пока нет</p>
+        <p class="empty">Документов пока нет</p>
       {{ end }}
     </div>
 
     <!-- ===== Кнопка "Очистить заявку" ===== -->
     <div class="delete-btn-wrapper">
-      <form method="POST" action="/application/{{ .ApplicationID }}/delete">
+      <form method="POST" action="/document-request/{{ .AccessRequestID }}/delete">
         <button class="delete-btn">Удалить заявку</button>
       </form>
 

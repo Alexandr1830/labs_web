@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     <!-- Заявка -->
     {{ if .AppID }}
-      <a href="/application/{{ .AppID }}" class="cart-link" style="text-decoration:none;">
+      <a href="/document-request/{{ .AppID }}" class="cart-link" style="text-decoration:none;">
         <img src="/resources/img/cart.png" class="cart-icon" alt="Заявка">
         <span class="cart-count">{{ .AppCount }}</span>
       </a>
@@ -81,9 +81,9 @@ document.addEventListener("DOMContentLoaded", () => {
   <main class="content">
 
     <div class="cards">
-      {{ range .orders }}
+      {{ range .documents }}
 
-      <a href="/order/{{ .ServiceID }}" class="card-link">
+      <a href="/document/{{ .DocumentID }}" class="card-link">
         <div class="card">
 
           <!-- Иконка -->
@@ -105,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
 
             <!-- Добавить в заявку -->
-            <form method="POST" action="/application/add/{{ .ServiceID }}" onclick="event.stopPropagation();" class="center">
+            <form method="POST" action="/document-request/add/{{ .DocumentID }}" onclick="event.stopPropagation();" class="center">
               <button class="edit-btn">Добавить</button>
             </form>
 

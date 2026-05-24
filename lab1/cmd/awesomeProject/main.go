@@ -36,6 +36,6 @@ func main() {
 
 	// === 4. Регистрируем API и статическую часть ===
 	hand.RegisterAPI(router)
-	application := pkg.NewApp(conf, router, hand)
-	application.RunApp()
+	server := pkg.NewApp(conf, router, hand)
+	server.RunApp()
 }

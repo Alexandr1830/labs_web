@@ -18,7 +18,7 @@
         "header": [
           { "key": "Content-Type", "value": "application/json" }
         ],
-        "url": "{{baseUrl}}/auth/register",
+        "url": "{{baseUrl}}/sign_up",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"username\": \"new user\",\n  \"email\": \"new@mail.ru\",\n  \"password\": \"pass123\"\n}"
@@ -32,7 +32,7 @@
         "header": [
           { "key": "Content-Type", "value": "application/json" }
         ],
-        "url": "{{baseUrl}}/auth/login",
+        "url": "{{baseUrl}}/login",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"email\": \"ivanov@mail.ru\",\n  \"password\": \"hash123\"\n}"
@@ -43,7 +43,7 @@
       "name": "Auth - Logout",
       "request": {
         "method": "POST",
-        "url": "{{baseUrl}}/auth/logout"
+        "url": "{{baseUrl}}/logout"
       }
     },
     {
@@ -68,13 +68,13 @@
       }
     },
     {
-      "name": "Services - List (filters)",
+      "name": "Documents - List (filters)",
       "request": {
         "method": "GET",
         "url": {
-          "raw": "{{baseUrl}}/services?status=active&q=API",
+          "raw": "{{baseUrl}}/documents?status=active&q=API",
           "host": ["{{baseUrl}}"],
-          "path": ["services"],
+          "path": ["documents"],
           "query": [
             { "key": "status", "value": "active" },
             { "key": "q", "value": "API" }
@@ -83,20 +83,20 @@
       }
     },
     {
-      "name": "Services - Get one",
+      "name": "Documents - Get one",
       "request": {
         "method": "GET",
-        "url": "{{baseUrl}}/services/1"
+        "url": "{{baseUrl}}/documents/1"
       }
     },
     {
-      "name": "Services - Create",
+      "name": "Documents - Create",
       "request": {
         "method": "POST",
         "header": [
           { "key": "Content-Type", "value": "application/json" }
         ],
-        "url": "{{baseUrl}}/services",
+        "url": "{{baseUrl}}/documents",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"title\": \"Новая услуга\",\n  \"type\": \"doc\",\n  \"description\": \"Описание\",\n  \"status\": \"active\"\n}"
@@ -104,13 +104,13 @@
       }
     },
     {
-      "name": "Services - Update",
+      "name": "Documents - Update",
       "request": {
         "method": "PUT",
         "header": [
           { "key": "Content-Type", "value": "application/json" }
         ],
-        "url": "{{baseUrl}}/services/1",
+        "url": "{{baseUrl}}/documents/1",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"title\": \"Обновлённая услуга\",\n  \"type\": \"doc\",\n  \"description\": \"Новое описание\",\n  \"status\": \"active\"\n}"
@@ -118,17 +118,17 @@
       }
     },
     {
-      "name": "Services - Delete",
+      "name": "Documents - Delete",
       "request": {
         "method": "DELETE",
-        "url": "{{baseUrl}}/services/1"
+        "url": "{{baseUrl}}/documents/1"
       }
     },
     {
-      "name": "Services - Upload image",
+      "name": "Documents - Upload image",
       "request": {
         "method": "POST",
-        "url": "{{baseUrl}}/services/1/image",
+        "url": "{{baseUrl}}/documents/1/image",
         "body": {
           "mode": "formdata",
           "formdata": [
@@ -145,24 +145,24 @@
       "name": "Cart - Icon",
       "request": {
         "method": "GET",
-        "url": "{{baseUrl}}/cart"
+        "url": "{{baseUrl}}/cart-icon"
       }
     },
     {
-      "name": "Services - Add to draft",
+      "name": "Documents - Add to draft",
       "request": {
         "method": "POST",
-        "url": "{{baseUrl}}/services/1/add-to-cart"
+        "url": "{{baseUrl}}/documents/1/add-to-cart"
       }
     },
     {
-      "name": "Applications - List (filters)",
+      "name": "AccessRequests - List (filters)",
       "request": {
         "method": "GET",
         "url": {
-          "raw": "{{baseUrl}}/applications?status=formed&from=2025-01-01&to=2026-12-31",
+          "raw": "{{baseUrl}}/document-requests?status=formed&from=2025-01-01&to=2026-12-31",
           "host": ["{{baseUrl}}"],
-          "path": ["applications"],
+          "path": ["document-requests"],
           "query": [
             { "key": "status", "value": "formed" },
             { "key": "from", "value": "2025-01-01" },
@@ -172,20 +172,20 @@
       }
     },
     {
-      "name": "Applications - Get one",
+      "name": "AccessRequests - Get one",
       "request": {
         "method": "GET",
-        "url": "{{baseUrl}}/applications/1"
+        "url": "{{baseUrl}}/document-requests/1"
       }
     },
     {
-      "name": "Applications - Update fields",
+      "name": "AccessRequests - Update fields",
       "request": {
         "method": "PUT",
         "header": [
           { "key": "Content-Type", "value": "application/json" }
         ],
-        "url": "{{baseUrl}}/applications/1",
+        "url": "{{baseUrl}}/document-requests/1",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"title\": \"Заявка на услуги\",\n  \"description\": \"Комментарий\"\n}"
@@ -193,41 +193,41 @@
       }
     },
     {
-      "name": "Applications - Submit (draft -> formed)",
+      "name": "AccessRequests - Submit (draft -> formed)",
       "request": {
         "method": "PUT",
-        "url": "{{baseUrl}}/applications/1/submit"
+        "url": "{{baseUrl}}/document-requests/1/submit"
       }
     },
     {
-      "name": "Applications - Complete (formed -> completed)",
+      "name": "AccessRequests - Complete (formed -> completed)",
       "request": {
         "method": "PUT",
-        "url": "{{baseUrl}}/applications/1/complete"
+        "url": "{{baseUrl}}/document-requests/1/complete"
       }
     },
     {
-      "name": "Applications - Reject (formed -> rejected)",
+      "name": "AccessRequests - Reject (formed -> rejected)",
       "request": {
         "method": "PUT",
-        "url": "{{baseUrl}}/applications/1/reject"
+        "url": "{{baseUrl}}/document-requests/1/reject"
       }
     },
     {
-      "name": "Applications - Delete (draft only)",
+      "name": "AccessRequests - Delete (draft only)",
       "request": {
         "method": "DELETE",
-        "url": "{{baseUrl}}/applications/1"
+        "url": "{{baseUrl}}/document-requests/1"
       }
     },
     {
-      "name": "Application services - Update qty/position/is_primary",
+      "name": "Request Documents - Update qty/position/is_primary",
       "request": {
         "method": "PUT",
         "header": [
           { "key": "Content-Type", "value": "application/json" }
         ],
-        "url": "{{baseUrl}}/applications/1/services/1",
+        "url": "{{baseUrl}}/document-requests/1/documents/1",
         "body": {
           "mode": "raw",
           "raw": "{\n  \"quantity\": 2,\n  \"position\": 1,\n  \"is_primary\": true\n}"
@@ -235,10 +235,10 @@
       }
     },
     {
-      "name": "Application services - Delete",
+      "name": "Request Documents - Delete",
       "request": {
         "method": "DELETE",
-        "url": "{{baseUrl}}/applications/1/services/1"
+        "url": "{{baseUrl}}/document-requests/1/documents/1"
       }
     }
   ]

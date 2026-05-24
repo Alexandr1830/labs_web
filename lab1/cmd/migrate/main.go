@@ -18,18 +18,18 @@ func main() {
 		panic("failed to connect database")
 	}
 
-	// Migrate schema for users, services, applications, m2m
+	// Migrate schema for users, documents, access_requests, m2m
 	if err = db.AutoMigrate(
 		&repository.User{},
-		&repository.Service{},
-		&repository.Application{},
-		&repository.ApplicationService{},
+		&repository.Document{},
+		&repository.AccessRequest{},
+		&repository.RequestDocument{},
 	); err != nil {
 		panic("cant migrate db")
 	}
 
 	seedUsers(db)
-	seedServices(db)
+	seedDocuments(db)
 	log.Println("migration + seed done")
 }
 
@@ -45,15 +45,15 @@ func seedUsers(db *gorm.DB) {
 	}
 }
 
-func seedServices(db *gorm.DB) {
-	services := []repository.Service{
+func seedDocuments(db *gorm.DB) {
+	documents := []repository.Document{
 		{Title: "Отчет по продажам Q1", Type: "xls", Status: "active", Description: "Финансовый отчет за первый квартал", AccessLevel: 1, ImageURL: "/resources/img/xls.png"}, // чтение
 		{Title: "Техническая спецификация API", Type: "doc", Status: "active", Description: "Спецификация REST API", AccessLevel: 2, ImageURL: "/resources/img/doc.png"},      // запись
 		{Title: "ER-диаграмма базы", Type: "sql", Status: "draft", Description: "Диаграмма текущей схемы данных", AccessLevel: 3, ImageURL: "/resources/img/sql.png"},         // чтение+запись
 		{Title: "Отчет по доступам", Type: "A", Status: "active", Description: "Отчет о выдаче прав доступа", AccessLevel: 3, ImageURL: "/resources/img/A.png"},               // чтение+запись
 	}
 
-	for _, s := range services {
+	for _, s := range documents {
 		db.Where("name = ?", s.Title).Assign(s).FirstOrCreate(&s)
 	}
 }

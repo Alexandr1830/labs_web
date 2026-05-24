@@ -1,7 +1,7 @@
 @base = http://localhost:8080/api
 
-### Auth: register
-POST {{base}}/auth/register
+### 4.1.1 Регистрация
+POST {{base}}/sign_up
 Content-Type: application/json
 
 {
@@ -10,8 +10,8 @@ Content-Type: application/json
   "password": "pass123"
 }
 
-### Auth: login
-POST {{base}}/auth/login
+### 4.1.2 Аутентификация
+POST {{base}}/login
 Content-Type: application/json
 
 {
@@ -19,13 +19,13 @@ Content-Type: application/json
   "password": "hash123"
 }
 
-### Auth: logout
-POST {{base}}/auth/logout
+### 4.1.3 Деавторизация
+POST {{base}}/logout
 
-### Profile: get
+### 4.1.4 Профиль (текущий пользователь)
 GET {{base}}/profile
 
-### Profile: update
+### 4.1.5 Обновить профиль
 PUT {{base}}/profile
 Content-Type: application/json
 
@@ -35,39 +35,39 @@ Content-Type: application/json
   "password": ""
 }
 
-### Services: list (filter by status, q)
-GET {{base}}/services?status=active&q=API
+### 4.1.6 Список документов (фильтр по статусу + поиск)
+GET {{base}}/documents?status=active&q=API
 
-### Services: one
-GET {{base}}/services/1
+### 4.1.7 Один документ
+GET {{base}}/documents/1
 
-### Services: create
-POST {{base}}/services
+### 4.1.8 Добавить документ (модератор)
+POST {{base}}/documents
 Content-Type: application/json
 
 {
-  "title": "Новая услуга",
+  "title": "Новый документ",
   "type": "doc",
   "description": "Описание",
   "status": "active"
 }
 
-### Services: update
-PUT {{base}}/services/1
+### 4.1.9 Обновить документ
+PUT {{base}}/documents/1
 Content-Type: application/json
 
 {
-  "title": "Обновлённая услуга",
+  "title": "Обновлённый документ",
   "type": "doc",
   "description": "Новое описание",
   "status": "active"
 }
 
-### Services: delete (logical)
-DELETE {{base}}/services/1
+### 4.1.10 Удалить документ (логическое)
+DELETE {{base}}/documents/1
 
-### Services: upload image (multipart)
-POST {{base}}/services/1/image
+### 4.1.11 Загрузка изображения документа (multipart)
+POST {{base}}/documents/1/image
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary
@@ -77,41 +77,54 @@ Content-Type: image/png
 < ./resources/img/doc.png
 --boundary--
 
-### Cart: icon
-GET {{base}}/cart
-
-### Add service to draft
-POST {{base}}/services/1/add-to-cart
-
-### Applications: list (filter by status and formed_at range)
-GET {{base}}/applications?status=formed&from=2025-01-01&to=2026-12-31
-
-### Applications: one
-GET {{base}}/applications/1
-
-### Applications: update fields (title/description only)
-PUT {{base}}/applications/1
+### 4.1.12 Добавить документ в заявку (с access_level)
+POST {{base}}/document-requests/1/documents/2
 Content-Type: application/json
 
 {
-  "title": "Заявка на услуги",
+  "access_level": 2
+}
+
+### 4.1.13 Добавить документ в черновик (создаёт draft если нет)
+POST {{base}}/document-requests/add-to-draft
+Content-Type: application/json
+
+{
+  "document_id": 1
+}
+
+### 4.1.14 Список заявок (фильтр по статусу и диапазону дат формирования)
+GET {{base}}/document-requests?status=formed&from=2025-01-01&to=2026-12-31
+
+### 4.1.15 Одна заявка
+GET {{base}}/document-requests/1
+
+### 4.1.16 Изменить название/описание заявки (только черновик)
+PUT {{base}}/document-requests/1
+Content-Type: application/json
+
+{
+  "title": "Заявка на документы",
   "description": "Комментарий"
 }
 
-### Applications: submit (draft -> formed, only creator)
-PUT {{base}}/applications/1/submit
+### 4.1.17 Удалить заявку (сырой SQL UPDATE, только свой черновик)
+DELETE {{base}}/document-requests/1
 
-### Applications: complete (formed -> completed, only moderator)
-PUT {{base}}/applications/1/complete
+### 4.1.18 Сформировать заявку (draft -> formed, только создатель)
+PUT {{base}}/document-requests/1/form
 
-### Applications: reject (formed -> rejected, only moderator)
-PUT {{base}}/applications/1/reject
+### 4.1.19 Завершить/отклонить заявку (только модератор)
+PUT {{base}}/document-requests/1/complete
 
-### Applications: delete (only own draft)
-DELETE {{base}}/applications/1
+### 4.1.19 (вариант reject через отдельный URL)
+PUT {{base}}/document-requests/1/reject
 
-### Application services: update qty/position/is_primary
-PUT {{base}}/applications/1/services/1
+### 4.1.20 Удалить документ из заявки
+DELETE {{base}}/document-requests/1/documents/1
+
+### m-m: обновить количество/позицию/is_primary документа в заявке
+PUT {{base}}/document-requests/1/documents/1
 Content-Type: application/json
 
 {
@@ -120,5 +133,5 @@ Content-Type: application/json
   "is_primary": true
 }
 
-### Application services: delete
-DELETE {{base}}/applications/1/services/1
+### 4.1.21 Иконка корзины
+GET {{base}}/cart-icon

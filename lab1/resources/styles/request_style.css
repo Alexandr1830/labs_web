@@ -64,7 +64,7 @@ body {
 }
 
 /* ====== ЗАГОЛОВОК ЗАЯВКИ ====== */
-.application-header {
+.request-header {
   width: 900px;
   background: #fff;
   border-radius: 12px;

@@ -19,59 +19,63 @@ import (
 func (h *Handler) RegisterAPI(router *gin.Engine) {
 	api := router.Group("/api")
 
-	// Services
-	api.GET("/services", h.apiGetServices)
-	api.GET("/services/:id", h.apiGetService)
-	api.POST("/services", h.apiCreateService)
-	api.PUT("/services/:id", h.apiUpdateService)
-	api.DELETE("/services/:id", h.apiDeleteService)
-	api.POST("/services/:id/add-to-cart", h.apiAddServiceToDraft)
-	api.POST("/services/:id/image", h.apiUploadServiceImage)
+	// Documents
+	api.GET("/documents", h.apiGetDocuments)
+	api.GET("/documents/:id", h.apiGetDocument)
+	api.POST("/documents", h.apiCreateDocument)
+	api.PUT("/documents/:id", h.apiUpdateDocument)
+	api.DELETE("/documents/:id", h.apiDeleteDocument)
+	api.POST("/documents/:id/image", h.apiUploadDocumentImage)
+
+	// Add to draft (auto-create draft, по ТЗ 4.1.13)
+	api.POST("/document-requests/add-to-draft", h.apiAddDocumentToDraft)
+	// Add document to specific request (по ТЗ 4.1.12)
+	api.POST("/document-requests/:id/documents/:documentId", h.apiAddDocumentToRequest)
 
 	// Cart
-	api.GET("/cart", h.apiGetCartIcon)
+	api.GET("/cart-icon", h.apiGetCartIcon)
 
-	// Applications
-	api.GET("/applications", h.apiListApplications)
-	api.GET("/applications/:id", h.apiGetApplication)
-	api.PUT("/applications/:id", h.apiUpdateApplication)
-	api.PUT("/applications/:id/submit", h.apiSubmitApplication)
-	api.PUT("/applications/:id/complete", h.apiCompleteApplication)
-	api.PUT("/applications/:id/reject", h.apiRejectApplication)
-	api.DELETE("/applications/:id", h.apiDeleteApplicationAPI)
+	// AccessRequests
+	api.GET("/document-requests", h.apiListAccessRequests)
+	api.GET("/document-requests/:id", h.apiGetAccessRequest)
+	api.PUT("/document-requests/:id", h.apiUpdateAccessRequest)
+	api.PUT("/document-requests/:id/form", h.apiSubmitAccessRequest)
+	api.PUT("/document-requests/:id/complete", h.apiCompleteAccessRequest)
+	api.PUT("/document-requests/:id/reject", h.apiRejectAccessRequest)
+	api.DELETE("/document-requests/:id", h.apiDeleteAccessRequestAPI)
 
-	// Application services (m-m)
-	api.PUT("/applications/:id/services/:serviceId", h.apiUpdateApplicationService)
-	api.DELETE("/applications/:id/services/:serviceId", h.apiDeleteApplicationService)
+	// AccessRequest documents (m-m)
+	api.PUT("/document-requests/:id/documents/:documentId", h.apiUpdateRequestDocument)
+	api.DELETE("/document-requests/:id/documents/:documentId", h.apiDeleteRequestDocument)
 
 	// Users
-	api.POST("/auth/register", h.apiRegisterUser)
-	api.POST("/auth/login", h.apiLogin)
-	api.POST("/auth/logout", h.apiLogout)
+	api.POST("/sign_up", h.apiRegisterUser)
+	api.POST("/login", h.apiLogin)
+	api.POST("/logout", h.apiLogout)
 	api.GET("/profile", h.apiGetProfile)
 	api.PUT("/profile", h.apiUpdateProfile)
 }
 
-// ===== Services =====
-func (h *Handler) apiGetServices(ctx *gin.Context) {
+// ===== Documents =====
+func (h *Handler) apiGetDocuments(ctx *gin.Context) {
 	status := ctx.Query("status")
 	name := ctx.Query("q")
 
-	services, err := h.Repository.GetServicesFiltered(name, status)
+	documents, err := h.Repository.GetDocumentsFiltered(name, status)
 	if err != nil {
 		h.errorHandler(ctx, 500, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, services)
+	ctx.JSON(http.StatusOK, documents)
 }
 
-func (h *Handler) apiGetService(ctx *gin.Context) {
+func (h *Handler) apiGetDocument(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
-	svc, err := h.Repository.GetServiceByID(uint(id))
+	svc, err := h.Repository.GetDocumentByID(uint(id))
 	if err != nil {
 		h.errorHandler(ctx, 404, err)
 		return
@@ -79,7 +83,7 @@ func (h *Handler) apiGetService(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, svc)
 }
 
-type servicePayload struct {
+type documentPayload struct {
 	Title       string `json:"title"`
 	Type        string `json:"type"`
 	Description string `json:"description"`
@@ -87,8 +91,8 @@ type servicePayload struct {
 	ImageURL    string `json:"image_url"`
 }
 
-func (h *Handler) apiCreateService(ctx *gin.Context) {
-	var req servicePayload
+func (h *Handler) apiCreateDocument(ctx *gin.Context) {
+	var req documentPayload
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
@@ -97,7 +101,7 @@ func (h *Handler) apiCreateService(ctx *gin.Context) {
 	req.Type = sanitizeString(req.Type)
 	req.Description = sanitizeString(req.Description)
 	req.Status = sanitizeString(req.Status)
-	svc := repository.Service{
+	svc := repository.Document{
 		Title:       req.Title,
 		Type:        req.Type,
 		Description: req.Description,
@@ -108,7 +112,7 @@ func (h *Handler) apiCreateService(ctx *gin.Context) {
 	if svc.Status == "" {
 		svc.Status = "active"
 	}
-	created, err := h.Repository.CreateService(svc)
+	created, err := h.Repository.CreateDocument(svc)
 	if err != nil {
 		h.errorHandler(ctx, 500, err)
 		return
@@ -116,13 +120,13 @@ func (h *Handler) apiCreateService(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, created)
 }
 
-func (h *Handler) apiUpdateService(ctx *gin.Context) {
+func (h *Handler) apiUpdateDocument(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
-	var req servicePayload
+	var req documentPayload
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
@@ -131,47 +135,82 @@ func (h *Handler) apiUpdateService(ctx *gin.Context) {
 	req.Type = sanitizeString(req.Type)
 	req.Description = sanitizeString(req.Description)
 	req.Status = sanitizeString(req.Status)
-	if err := h.Repository.UpdateService(uint(id), req.Title, req.Type, req.Description, req.Status); err != nil {
+	if err := h.Repository.UpdateDocument(uint(id), req.Title, req.Type, req.Description, req.Status); err != nil {
 		h.errorHandler(ctx, 500, err)
 		return
 	}
 	ctx.Status(http.StatusNoContent)
 }
 
-func (h *Handler) apiDeleteService(ctx *gin.Context) {
+func (h *Handler) apiDeleteDocument(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
-	if err := h.Repository.DeleteService(uint(id)); err != nil {
+	if err := h.Repository.DeleteDocument(uint(id)); err != nil {
 		h.errorHandler(ctx, 500, err)
 		return
 	}
 	ctx.Status(http.StatusNoContent)
 }
 
-func (h *Handler) apiAddServiceToDraft(ctx *gin.Context) {
-	serviceID, err := strconv.Atoi(ctx.Param("id"))
+// apiAddDocumentToDraft — добавляет документ в черновую заявку текущего
+// пользователя; если черновика нет, создаёт его. ТЗ 4.1.13.
+func (h *Handler) apiAddDocumentToDraft(ctx *gin.Context) {
+	var req struct {
+		DocumentID uint `json:"document_id"`
+	}
+	if err := ctx.ShouldBindJSON(&req); err != nil || req.DocumentID == 0 {
+		h.errorHandler(ctx, 400, fmt.Errorf("document_id required"))
+		return
+	}
+	userID := userctx.CurrentUserID()
+	app, err := h.Repository.GetOrCreateDraftAccessRequest(userID)
+	if err != nil {
+		h.errorHandler(ctx, 500, err)
+		return
+	}
+	if err := h.Repository.AddDocumentToAccessRequest(app.AccessRequestID, req.DocumentID); err != nil {
+		h.errorHandler(ctx, 500, err)
+		return
+	}
+	doc, err := h.Repository.GetDocumentByID(req.DocumentID)
+	if err != nil {
+		h.errorHandler(ctx, 500, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, doc)
+}
+
+// apiAddDocumentToRequest — добавляет документ в указанную заявку. ТЗ 4.1.12.
+func (h *Handler) apiAddDocumentToRequest(ctx *gin.Context) {
+	reqID, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
-	userID := userctx.CurrentUserID()
-	app, err := h.Repository.GetOrCreateDraftApplication(userID)
+	docID, err := strconv.Atoi(ctx.Param("documentId"))
 	if err != nil {
+		h.errorHandler(ctx, 400, err)
+		return
+	}
+	var body struct {
+		AccessLevel float64 `json:"access_level"`
+	}
+	_ = ctx.ShouldBindJSON(&body)
+	if err := h.Repository.AddDocumentToAccessRequest(uint(reqID), uint(docID)); err != nil {
 		h.errorHandler(ctx, 500, err)
 		return
 	}
-	if err := h.Repository.AddServiceToApplication(app.ApplicationID, uint(serviceID)); err != nil {
-		h.errorHandler(ctx, 500, err)
-		return
+	if body.AccessLevel > 0 {
+		_ = h.Repository.UpdateRequestDocumentAccessLevel(uint(reqID), uint(docID), body.AccessLevel)
 	}
-	ctx.JSON(http.StatusOK, gin.H{"application_id": app.ApplicationID})
+	ctx.JSON(http.StatusOK, gin.H{"message": "added"})
 }
 
-// Загрузка/замена изображения услуги (упрощённо: сохраняем локально в uploads/)
-func (h *Handler) apiUploadServiceImage(ctx *gin.Context) {
+// Загрузка/замена изображения документа в MinIO. ТЗ 4.1.11.
+func (h *Handler) apiUploadDocumentImage(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		h.errorHandler(ctx, 400, err)
@@ -191,7 +230,7 @@ func (h *Handler) apiUploadServiceImage(ctx *gin.Context) {
 	}
 
 	// удаляем старый объект, если был
-	svc, err := h.Repository.GetServiceByID(uint(id))
+	svc, err := h.Repository.GetDocumentByID(uint(id))
 	if err != nil {
 		h.errorHandler(ctx, 404, err)
 		return
@@ -200,7 +239,7 @@ func (h *Handler) apiUploadServiceImage(ctx *gin.Context) {
 		_ = cli.RemoveObject(ctx, cfg.Bucket, oldObj, minio.RemoveObjectOptions{})
 	}
 
-	objectName := fmt.Sprintf("service_%d_%d%s", id, time.Now().Unix(), filepath.Ext(header.Filename))
+	objectName := fmt.Sprintf("document_%d_%d%s", id, time.Now().Unix(), filepath.Ext(header.Filename))
 	uploadInfo, err := cli.PutObject(ctx, cfg.Bucket, objectName, file, header.Size, minio.PutObjectOptions{
 		ContentType: header.Header.Get("Content-Type"),
 	})
@@ -210,7 +249,7 @@ func (h *Handler) apiUploadServiceImage(ctx *gin.Context) {
 	}
 
 	imageURL := storage.ObjectURL(cfg, uploadInfo.Key)
-	if err := h.Repository.UpdateServiceImage(uint(id), imageURL); err != nil {
+	if err := h.Repository.UpdateDocumentImage(uint(id), imageURL); err != nil {
 		h.errorHandler(ctx, 500, err)
 		return
 	}
@@ -221,16 +260,16 @@ func (h *Handler) apiUploadServiceImage(ctx *gin.Context) {
 // ===== Cart icon =====
 func (h *Handler) apiGetCartIcon(ctx *gin.Context) {
 	userID := userctx.CurrentUserID()
-	app, err := h.Repository.GetDraftApplication(userID)
+	app, err := h.Repository.GetDraftAccessRequest(userID)
 	if err != nil {
-		ctx.JSON(http.StatusOK, gin.H{"application_id": nil, "count": 0})
+		ctx.JSON(http.StatusOK, gin.H{"request_id": nil, "cart_count": 0})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"application_id": app.ApplicationID, "count": len(app.Services)})
+	ctx.JSON(http.StatusOK, gin.H{"request_id": app.AccessRequestID, "cart_count": len(app.Documents)})
 }
 
-// ===== Applications =====
-func (h *Handler) apiListApplications(ctx *gin.Context) {
+// ===== AccessRequests =====
+func (h *Handler) apiListAccessRequests(ctx *gin.Context) {
 	status := ctx.Query("status")
 	fromStr := ctx.Query("from")
 	toStr := ctx.Query("to")
@@ -247,7 +286,7 @@ func (h *Handler) apiListApplications(ctx *gin.Context) {
 		}
 	}
 
-	apps, err := h.Repository.ListApplicationsFiltered(status, fromPtr, toPtr)
+	apps, err := h.Repository.ListAccessRequestsFiltered(status, fromPtr, toPtr)
 	if err != nil {
 		h.errorHandler(ctx, 500, err)
 		return
@@ -255,13 +294,13 @@ func (h *Handler) apiListApplications(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, apps)
 }
 
-func (h *Handler) apiGetApplication(ctx *gin.Context) {
+func (h *Handler) apiGetAccessRequest(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
-	app, err := h.Repository.GetApplicationByID(uint(id))
+	app, err := h.Repository.GetAccessRequestByID(uint(id))
 	if err != nil {
 		h.errorHandler(ctx, 404, err)
 		return
@@ -269,78 +308,78 @@ func (h *Handler) apiGetApplication(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, app)
 }
 
-type applicationPayload struct {
+type accessRequestPayload struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 }
 
-func (h *Handler) apiUpdateApplication(ctx *gin.Context) {
+func (h *Handler) apiUpdateAccessRequest(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
-	var req applicationPayload
+	var req accessRequestPayload
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
 	req.Title = sanitizeString(req.Title)
 	req.Description = sanitizeString(req.Description)
-	if err := h.Repository.UpdateApplicationFields(uint(id), req.Title, req.Description); err != nil {
+	if err := h.Repository.UpdateAccessRequestFields(uint(id), req.Title, req.Description); err != nil {
 		h.errorHandler(ctx, 500, err)
 		return
 	}
 	ctx.Status(http.StatusNoContent)
 }
 
-func (h *Handler) apiSubmitApplication(ctx *gin.Context) {
+func (h *Handler) apiSubmitAccessRequest(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
-	if err := h.Repository.MarkApplicationSubmitted(uint(id), userctx.CurrentUserID()); err != nil {
+	if err := h.Repository.MarkAccessRequestSubmitted(uint(id), userctx.CurrentUserID()); err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
 	ctx.Status(http.StatusOK)
 }
 
-func (h *Handler) apiCompleteApplication(ctx *gin.Context) {
+func (h *Handler) apiCompleteAccessRequest(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
-	if err := h.Repository.MarkApplicationCompleted(uint(id), userctx.CurrentModeratorID()); err != nil {
+	if err := h.Repository.MarkAccessRequestCompleted(uint(id), userctx.CurrentModeratorID()); err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
 	ctx.Status(http.StatusOK)
 }
 
-func (h *Handler) apiRejectApplication(ctx *gin.Context) {
+func (h *Handler) apiRejectAccessRequest(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
-	if err := h.Repository.MarkApplicationRejected(uint(id), userctx.CurrentModeratorID()); err != nil {
+	if err := h.Repository.MarkAccessRequestRejected(uint(id), userctx.CurrentModeratorID()); err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
 	ctx.Status(http.StatusOK)
 }
 
-func (h *Handler) apiDeleteApplicationAPI(ctx *gin.Context) {
+func (h *Handler) apiDeleteAccessRequestAPI(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
 	// Ограничиваем удаление: только черновик и только создатель
-	app, err := h.Repository.GetApplicationByID(uint(id))
+	app, err := h.Repository.GetAccessRequestByID(uint(id))
 	if err != nil {
 		h.errorHandler(ctx, 404, err)
 		return
@@ -349,7 +388,7 @@ func (h *Handler) apiDeleteApplicationAPI(ctx *gin.Context) {
 		h.errorHandler(ctx, 400, fmt.Errorf("delete allowed only for own draft"))
 		return
 	}
-	if err := h.Repository.DeleteApplicationByID(uint(id)); err != nil {
+	if err := h.Repository.DeleteAccessRequestByID(uint(id)); err != nil {
 		h.errorHandler(ctx, 500, err)
 		return
 	}
@@ -357,24 +396,24 @@ func (h *Handler) apiDeleteApplicationAPI(ctx *gin.Context) {
 }
 
 // ===== m2m =====
-type appServicePayload struct {
+type requestDocumentPayload struct {
 	Quantity  int  `json:"quantity"`
 	Position  int  `json:"position"`
 	IsPrimary bool `json:"is_primary"`
 }
 
-func (h *Handler) apiUpdateApplicationService(ctx *gin.Context) {
+func (h *Handler) apiUpdateRequestDocument(ctx *gin.Context) {
 	appID, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
-	serviceID, err := strconv.Atoi(ctx.Param("serviceId"))
+	documentID, err := strconv.Atoi(ctx.Param("documentId"))
 	if err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
-	var req appServicePayload
+	var req requestDocumentPayload
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
@@ -382,25 +421,25 @@ func (h *Handler) apiUpdateApplicationService(ctx *gin.Context) {
 	if req.Quantity <= 0 {
 		req.Quantity = 1
 	}
-	if err := h.Repository.UpdateApplicationServiceWithMeta(uint(appID), uint(serviceID), req.Quantity, req.Position, req.IsPrimary); err != nil {
+	if err := h.Repository.UpdateRequestDocumentWithMeta(uint(appID), uint(documentID), req.Quantity, req.Position, req.IsPrimary); err != nil {
 		h.errorHandler(ctx, 500, err)
 		return
 	}
 	ctx.Status(http.StatusOK)
 }
 
-func (h *Handler) apiDeleteApplicationService(ctx *gin.Context) {
+func (h *Handler) apiDeleteRequestDocument(ctx *gin.Context) {
 	appID, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
-	serviceID, err := strconv.Atoi(ctx.Param("serviceId"))
+	documentID, err := strconv.Atoi(ctx.Param("documentId"))
 	if err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
-	if err := h.Repository.DeleteApplicationService(uint(appID), uint(serviceID)); err != nil {
+	if err := h.Repository.DeleteRequestDocument(uint(appID), uint(documentID)); err != nil {
 		h.errorHandler(ctx, 500, err)
 		return
 	}

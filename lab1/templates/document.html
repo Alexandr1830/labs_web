@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <title>{{ .Title }}</title>
-  <link rel="stylesheet" href="/resources/styles/order_style.css">
+  <link rel="stylesheet" href="/resources/styles/document_style.css">
 </head>
 <body>
   <!-- ШАПКА -->
@@ -26,7 +26,7 @@
       <div class="doc-info">
         <h2 class="doc-title">{{ .Title }}</h2>
 
-        <p><strong>Тип услуги:</strong> {{ .Type }}</p>
+        <p><strong>Тип документа:</strong> {{ .Type }}</p>
         <p><strong>Дата создания:</strong> {{ formatDate .CreatedAt }}</p>
         <p><strong>Последнее изменение:</strong> {{ formatDate .UpdatedAt }}</p>
         <p><strong>Статус:</strong> {{ .Status }}</p>

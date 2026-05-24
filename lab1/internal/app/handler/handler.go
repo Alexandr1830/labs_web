@@ -30,18 +30,18 @@ func NewHandler(r *repository.Repository) *Handler {
 func (h *Handler) RegisterHandler(router *gin.Engine) {
 
 	// открытые маршруты
-	router.GET("/", h.GetOrders)
-	router.GET("/order/:id", h.GetOrder)
+	router.GET("/", h.GetDocuments)
+	router.GET("/document/:id", h.GetDocument)
 	router.POST("/login", h.LoginUser)
 
 	// закрытые маршруты
 	auth := router.Group("/")
 	auth.Use(middleware.JWTMiddleware())
 	{
-		router.POST("/application/add/:serviceId", middleware.JWTMiddleware(), h.AddService)
-		router.POST("/application/:id/service/:serviceId/access", middleware.JWTMiddleware(), h.UpdateServiceAccess)
-		router.POST("/application/:id/delete", middleware.JWTMiddleware(), h.DeleteApplication)
-		router.GET("/application/:id", middleware.JWTMiddleware(), h.GetApplication)
+		router.POST("/document-request/add/:documentId", middleware.JWTMiddleware(), h.AddDocument)
+		router.POST("/document-request/:id/document/:documentId/access", middleware.JWTMiddleware(), h.UpdateDocumentAccess)
+		router.POST("/document-request/:id/delete", middleware.JWTMiddleware(), h.DeleteAccessRequest)
+		router.GET("/document-request/:id", middleware.JWTMiddleware(), h.GetAccessRequest)
 	}
 }
 
@@ -96,18 +96,18 @@ func (h *Handler) errorHandler(ctx *gin.Context, code int, err error) {
 }
 
 // ========== СТРАНИЦА ДОКУМЕНТОВ ==========
-func (h *Handler) GetOrders(ctx *gin.Context) {
+func (h *Handler) GetDocuments(ctx *gin.Context) {
 	query := ctx.Query("query")
 
 	var (
-		services []repository.Service
-		err      error
+		documents []repository.Document
+		err       error
 	)
 
 	if query == "" {
-		services, err = h.Repository.GetAllServices()
+		documents, err = h.Repository.GetAllDocuments()
 	} else {
-		services, err = h.Repository.GetServicesByName(query)
+		documents, err = h.Repository.GetDocumentsByName(query)
 	}
 
 	if err != nil {
@@ -115,7 +115,7 @@ func (h *Handler) GetOrders(ctx *gin.Context) {
 		return
 	}
 
-	// Черновик создаём только при добавлении услуги
+	// Черновик создаём только при добавлении документа
 	appCount := 0
 	var appID uint
 	if token, err := ctx.Cookie("token"); err == nil && token != "" {
@@ -124,9 +124,9 @@ func (h *Handler) GetOrders(ctx *gin.Context) {
 		}); err == nil && parsed.Valid {
 			if claims, ok := parsed.Claims.(jwt.MapClaims); ok {
 				if uid, ok := claims["user_id"].(float64); ok {
-					if app, err := h.Repository.GetDraftApplication(uint(uid)); err == nil {
-						appCount = len(app.Services)
-						appID = app.ApplicationID
+					if app, err := h.Repository.GetDraftAccessRequest(uint(uid)); err == nil {
+						appCount = len(app.Documents)
+						appID = app.AccessRequestID
 					}
 				}
 			}
@@ -134,15 +134,15 @@ func (h *Handler) GetOrders(ctx *gin.Context) {
 	}
 
 	ctx.HTML(http.StatusOK, "index.html", gin.H{
-		"orders":   services,
-		"query":    query,
-		"AppCount": appCount,
-		"AppID":    appID,
+		"documents": documents,
+		"query":     query,
+		"AppCount":  appCount,
+		"AppID":     appID,
 	})
 }
 
 // ========== ОДИН ДОКУМЕНТ ==========
-func (h *Handler) GetOrder(ctx *gin.Context) {
+func (h *Handler) GetDocument(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -150,20 +150,20 @@ func (h *Handler) GetOrder(ctx *gin.Context) {
 		return
 	}
 
-	doc, err := h.Repository.GetServiceByID(uint(id))
+	doc, err := h.Repository.GetDocumentByID(uint(id))
 	if err != nil {
 		h.errorHandler(ctx, 404, err)
 		return
 	}
 
-	ctx.HTML(http.StatusOK, "order.html", doc)
+	ctx.HTML(http.StatusOK, "document.html", doc)
 }
 
-// ========== ДОБАВИТЬ УСЛУГУ В ЗАЯВКУ ==========
-func (h *Handler) AddService(ctx *gin.Context) {
+// ========== ДОБАВИТЬ ДОКУМЕНТ В ЗАЯВКУ ==========
+func (h *Handler) AddDocument(ctx *gin.Context) {
 
-	serviceIDStr := ctx.Param("serviceId")
-	serviceID, err := strconv.Atoi(serviceIDStr)
+	documentIDStr := ctx.Param("documentId")
+	documentID, err := strconv.Atoi(documentIDStr)
 	if err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
@@ -176,33 +176,33 @@ func (h *Handler) AddService(ctx *gin.Context) {
 	}
 	userID := uid.(uint)
 
-	// Проверяем услугу
-	_, err = h.Repository.GetServiceByID(uint(serviceID))
+	// Проверяем документ
+	_, err = h.Repository.GetDocumentByID(uint(documentID))
 	if err != nil {
 		h.errorHandler(ctx, 404, err)
 		return
 	}
 
 	// Единственная заявка
-	app, err := h.Repository.GetOrCreateDraftApplication(userID)
+	app, err := h.Repository.GetOrCreateDraftAccessRequest(userID)
 	if err != nil {
 		h.errorHandler(ctx, 500, err)
 		return
 	}
 
-	// Добавляем услугу
-	err = h.Repository.AddServiceToApplication(app.ApplicationID, uint(serviceID))
+	// Добавляем документ
+	err = h.Repository.AddDocumentToAccessRequest(app.AccessRequestID, uint(documentID))
 	if err != nil {
 		h.errorHandler(ctx, 500, err)
 		return
 	}
 
 	// Переходим к заявке
-	ctx.Redirect(http.StatusSeeOther, fmt.Sprintf("/application/%d", app.ApplicationID))
+	ctx.Redirect(http.StatusSeeOther, fmt.Sprintf("/document-request/%d", app.AccessRequestID))
 }
 
 // ========== СТРАНИЦА ЗАЯВКИ ==========
-func (h *Handler) GetApplication(ctx *gin.Context) {
+func (h *Handler) GetAccessRequest(ctx *gin.Context) {
 
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -211,24 +211,24 @@ func (h *Handler) GetApplication(ctx *gin.Context) {
 		return
 	}
 
-	app, err := h.Repository.GetApplicationByID(uint(id))
+	app, err := h.Repository.GetAccessRequestByID(uint(id))
 	if err != nil {
 		h.errorHandler(ctx, 404, err)
 		return
 	}
 
-	ctx.HTML(http.StatusOK, "application.html", app)
+	ctx.HTML(http.StatusOK, "request.html", app)
 }
 
 // ========== УДАЛИТЬ ЗАЯВКУ ==========
 
-func (h *Handler) DeleteApplication(ctx *gin.Context) {
+func (h *Handler) DeleteAccessRequest(ctx *gin.Context) {
 
 	idStr := ctx.Param("id")
 	id, _ := strconv.Atoi(idStr)
 
 	// Помечаем заявку как удалённую
-	err := h.Repository.DeleteApplicationByID(uint(id))
+	err := h.Repository.DeleteAccessRequestByID(uint(id))
 	if err != nil {
 		h.errorHandler(ctx, 500, err)
 		return
@@ -238,10 +238,10 @@ func (h *Handler) DeleteApplication(ctx *gin.Context) {
 	ctx.Redirect(http.StatusSeeOther, "/")
 }
 
-// ========== ОБНОВИТЬ УРОВЕНЬ ДОСТУПА УСЛУГИ В ЗАЯВКЕ ==========
-func (h *Handler) UpdateServiceAccess(ctx *gin.Context) {
+// ========== ОБНОВИТЬ УРОВЕНЬ ДОСТУПА ДОКУМЕНТА В ЗАЯВКЕ ==========
+func (h *Handler) UpdateDocumentAccess(ctx *gin.Context) {
 	appIDStr := ctx.Param("id")
-	serviceIDStr := ctx.Param("serviceId")
+	documentIDStr := ctx.Param("documentId")
 	levelStr := ctx.PostForm("access_level")
 
 	appID, err := strconv.Atoi(appIDStr)
@@ -249,7 +249,7 @@ func (h *Handler) UpdateServiceAccess(ctx *gin.Context) {
 		h.errorHandler(ctx, 400, err)
 		return
 	}
-	serviceID, err := strconv.Atoi(serviceIDStr)
+	documentID, err := strconv.Atoi(documentIDStr)
 	if err != nil {
 		h.errorHandler(ctx, 400, err)
 		return
@@ -260,12 +260,12 @@ func (h *Handler) UpdateServiceAccess(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.Repository.UpdateServiceAccessLevel(uint(appID), uint(serviceID), level); err != nil {
+	if err := h.Repository.UpdateRequestDocumentAccessLevel(uint(appID), uint(documentID), level); err != nil {
 		h.errorHandler(ctx, 500, err)
 		return
 	}
 
-	ctx.Redirect(http.StatusSeeOther, fmt.Sprintf("/application/%d", appID))
+	ctx.Redirect(http.StatusSeeOther, fmt.Sprintf("/document-request/%d", appID))
 }
 
 func (h *Handler) LoginUser(ctx *gin.Context) {

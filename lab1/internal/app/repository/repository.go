@@ -98,7 +98,13 @@ func (RequestDocument) TableName() string {
 //
 
 func init() {
-	_ = godotenv.Load("../../.env")
+	// .env может лежать в lab1/ или в lab1/cmd/<binary>/ — поэтому
+	// пробуем несколько кандидатов, первый существующий выигрывает.
+	for _, p := range []string{".env", "../.env", "../../.env"} {
+		if err := godotenv.Load(p); err == nil {
+			break
+		}
+	}
 
 	fmt.Println("DB_HOST =", os.Getenv("DB_HOST"))
 	fmt.Println("DB_PORT =", os.Getenv("DB_PORT"))

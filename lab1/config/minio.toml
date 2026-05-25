@@ -1,6 +1,0 @@
-Endpoint = "localhost:9000"
-AccessKey = "root"
-SecretKey = "rootpassword"
-UseSSL = false
-Bucket = "services"
-Region = "us-east-1"
